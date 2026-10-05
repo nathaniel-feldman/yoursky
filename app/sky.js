@@ -654,6 +654,12 @@
       this.holding = true;
       return new Promise((res) => setTimeout(res, duration));
     }
+    drain(rect, grains) {
+      const d = this.dpr, bright = [1.05, 0.8, 0.6];
+      for (const [x, y, sz, b] of grains) {
+        this.spawn((rect.left + x) * d, (rect.top + y) * d, { mode: 6, vx: (Math.random() - 0.5) * 24 * d, vy: Math.random() * 30 * d, life: 0.9 + Math.random() * 0.6, sz: sz * d, b: bright[b] ?? 0.8, delay: (y / rect.height) < 0.85 ? Math.random() * 0.18 : Math.random() * 0.05 });
+      }
+    }
     sift(rect) {
       if (motion.reduced) return;
       const d = this.dpr, inset = Math.min(rect.height / 2, 22);
@@ -724,7 +730,9 @@
         else {
           this.life[i] += dt;
           const md = this.mode[i];
-          if (md === 5) {
+          if (md === 6) {
+            this.vy[i] += 1000 * d * dt; this.vx[i] *= 0.99;
+          } else if (md === 5) {
             this.vy[i] += 1100 * d * dt;
             if (this.y[i] >= this.ty[i]) { this.y[i] = this.ty[i]; this.vy[i] *= -0.22; this.vx[i] *= 0.5; }
           } else if (md === 0 || md === 3) {
@@ -1206,6 +1214,7 @@
   }
 
   // ---- Sand pile: the only fill a chosen pill gets. Grains fall from the top edge and pile up on the floor. ----
+  const hooks = { drain: null };
   const PILE_COLORS = ['rgba(232,236,242,0.72)', 'rgba(196,202,212,0.5)', 'rgba(165,171,182,0.38)'];
   class SandPile {
     constructor(btn) {
@@ -1213,7 +1222,7 @@
       this.c = document.createElement('canvas'); this.c.className = 'pile'; this.c.setAttribute('aria-hidden', 'true');
       btn.insertBefore(this.c, btn.firstChild);
       this.ctx = this.c.getContext('2d'); this.bake = document.createElement('canvas'); this.bctx = this.bake.getContext('2d');
-      this.falling = []; this.toSpawn = 0; this.on = false; this.fn = (dt) => this.frame(dt);
+      this.falling = []; this.settledList = []; this.toSpawn = 0; this.on = false; this.fn = (dt) => this.frame(dt);
     }
     size() {
       const d = DPR(), w = this.btn.clientWidth, h = this.btn.clientHeight;
@@ -1233,6 +1242,7 @@
       return h - 3;
     }
     settle(x, y, sz, b) {
+      this.settledList.push([x, y, sz, b]);
       const g = this.bctx, d = this.d;
       g.fillStyle = PILE_COLORS[b]; g.fillRect((x - sz / 2) * d, (y - sz / 2) * d, sz * d, sz * d);
     }
@@ -1243,13 +1253,21 @@
       if (!this.size()) { requestAnimationFrame(() => this.set(on, instant)); this.on = !on; return; }
       if (on) {
         this.c.style.opacity = '1';
-        this.cols.fill(0); this.bctx.clearRect(0, 0, this.bake.width, this.bake.height); this.falling = [];
+        this.cols.fill(0); this.bctx.clearRect(0, 0, this.bake.width, this.bake.height); this.falling = []; this.settledList = [];
         if (instant || motion.reduced) {
           for (let i = 0; i < this.target(); i++) this.drop(Math.random() * this.w, true);
           this.draw();
         } else { this.toSpawn = this.target(); loop.add(this.fn); }
       } else {
         this.toSpawn = 0; this.falling = [];
+        // The sand drops out through the floor of the pill and keeps falling down the screen.
+        if (hooks.drain && !motion.reduced && this.settledList.length && this.btn.isConnected) {
+          const r = this.btn.getBoundingClientRect(), list = this.settledList, step = Math.max(1, Math.ceil(list.length / 650));
+          const out = []; for (let i = 0; i < list.length; i += step) out.push(list[i]);
+          hooks.drain(r, out);
+          this.settledList = []; this.cols.fill(0); this.bctx.clearRect(0, 0, this.bake.width, this.bake.height); this.ctx.clearRect(0, 0, this.c.width, this.c.height);
+          return;
+        }
         this.c.style.opacity = '0';
         setTimeout(() => { if (!this.on) { this.cols.fill(0); this.bctx.clearRect(0, 0, this.bake.width, this.bake.height); this.ctx.clearRect(0, 0, this.c.width, this.c.height); } }, 380);
       }
@@ -1301,5 +1319,5 @@
   new MutationObserver((ms) => { for (const m of ms) { const b = m.target; if (b._pile) b._pile.set(isOn(b)); } })
     .observe(document.documentElement, { subtree: true, attributes: true, attributeFilter: ['aria-checked', 'aria-pressed', 'aria-selected'] });
 
-  window.SKY = { Planet, Sky, SandFX, SandTrack, Scene, ScrollSand, Painter, piles, loop, motion, portrait, hashStr, DPR, quality, tintFromHex };
+  window.SKY = { Planet, Sky, SandFX, SandTrack, Scene, ScrollSand, Painter, piles, hooks, loop, motion, portrait, hashStr, DPR, quality, tintFromHex };
 })();

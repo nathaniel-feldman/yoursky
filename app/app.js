@@ -42,6 +42,7 @@
   const schoolPortrait = (s, size, grains) => portrait(s.id, size, { tint: s.col ? window.SKY.tintFromHex(s.col) : [1, 1, 1], grains });
   const PILLS = '.rail-opt, .schip, .chip:not(.more), .tile, .seg button';
   const piles = (root) => window.SKY.piles(root, PILLS);
+  window.SKY.hooks.drain = (rect, grains) => fx.drain(rect, grains);
   const CHANCE = { reach: 'Reach', target: 'Target', likely: 'Likely' };
   const pill = (cat) => `<span class="pill ${cat}">${CHANCE[cat]}</span>`;
 
@@ -588,9 +589,37 @@
     });
     const top = $('.card.top', stack);
     if (top && !top.dataset.wired) wireCard(top);
+    if (top && !deckHint.shown) {
+      deckHint.shown = true;
+      setTimeout(() => demoSwipe(top, 1), 900);
+      setTimeout(() => demoSwipe(top, 0.65), 7200);
+    }
     $('#keptn').textContent = S.kept.length;
     $('#finish').hidden = S.kept.length === 0;
     $('#undo').disabled = !S.history.length;
+  }
+  // Teach the gesture: the first card leans to Keep, then to Pass, shedding a little sand, then settles.
+  const deckHint = { shown: false, touched: false };
+  ['pointerdown', 'keydown', 'wheel'].forEach((t) => addEventListener(t, () => { if (S.screen === 'deck') deckHint.touched = true; }, { passive: true }));
+  function demoSwipe(card, amp) {
+    if (motion.reduced || deckHint.touched || !card.isConnected || !card.classList.contains('top') || !sheet.hidden) return;
+    const t0 = performance.now(), dur = 2100 * (0.8 + amp * 0.2), ez = (x) => (x < 0.5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2);
+    let burstR = false, burstL = false;
+    card.classList.add('dragging');
+    const reset = () => { card.style.transform = ''; card.style.setProperty('--lean', 0); card.classList.remove('dragging'); };
+    const step = (now) => {
+      if (deckHint.touched || !card.isConnected || card.classList.contains('leaving')) { if (!card.classList.contains('leaving')) reset(); return; }
+      const u = Math.min(1, (now - t0) / dur);
+      const x = u < 0.32 ? ez(u / 0.32) : u < 0.68 ? 1 - 2 * ez((u - 0.32) / 0.36) : -1 + ez((u - 0.68) / 0.32);
+      const dx = x * 70 * amp;
+      card.style.transform = `translate(${dx.toFixed(1)}px, 0) rotate(${(dx * 0.05).toFixed(2)}deg)`;
+      card.style.setProperty('--lean', Math.max(-1, Math.min(1, dx / 70)));
+      const r = card.getBoundingClientRect();
+      if (!burstR && u > 0.28) { burstR = true; fx.burst(r.right - 6, r.top + r.height * 0.45, 22); }
+      if (!burstL && u > 0.64) { burstL = true; fx.burst(r.left + 6, r.top + r.height * 0.45, 22); }
+      if (u < 1) requestAnimationFrame(step); else reset();
+    };
+    requestAnimationFrame(step);
   }
   function wireCard(card) {
     card.dataset.wired = '1';

@@ -101,7 +101,7 @@ p { margin: 0; }
 .wordmark { font: 500 13px var(--mono); letter-spacing: 0.32em; text-transform: uppercase; }
 .landing-copy { max-width: 520px; margin: 0 auto; width: 100%; display: flex; flex-direction: column; align-items: flex-start; gap: 18px; }
 .hook { font-family: var(--serif); font-size: clamp(26px, 11vw, 84px); white-space: nowrap; line-height: 0.95; letter-spacing: -0.01em; display: flex; flex-direction: column; }
-.hook .line { display: block; padding-bottom: 0.06em; }
+.hook .line { display: block; padding-bottom: 0.22em; margin-bottom: -0.16em; }
 .hook.forming .line { opacity: 0; }
 .hook .line { transition: opacity 0.9s var(--ease); }
 
