@@ -1,0 +1,210 @@
+# Curated school list. One school per line:
+#   Short name | name key (normalized prefix of the Scorecard name; alternates split by /) | state | flags | deadlines | note | accent color (hex, optional)
+# Flags: O open curriculum, C core curriculum, P project/hands-on, K co-op, S big-time sports,
+#        G big Greek scene, + known collaborative culture, - known intense/competitive culture, A art & design school
+# Deadlines: R = REA Nov 1 / RD Jan 1, E = ED Nov 1 / RD Jan 1, A = EA Nov 1 / RD Jan 5, U = UC/CSU Nov 30,
+#            P = EA Nov 1 / RD Jan 15, L = priority Dec 1 then rolling, or explicit "EA:11-01;RD:01-15"
+# Deadlines are typical patterns; always confirm on each school's site.
+Harvard|harvard university|MA||R||A51C30
+Yale|yale university|CT||R||00356B
+Princeton|princeton university|NJ||R||E77500
+Stanford|stanford university|CA||REA:11-01;RD:01-05||8C1515
+Columbia|columbia university in the city of new york|NY|C-|E|The Core: a shared set of great-books seminars for every student|75AADB
+Penn|university of pennsylvania|PA||ED:11-01;RD:01-05||011F5B
+Brown|brown university|RI|O+|E|Open Curriculum: no general education requirements|4E3629
+Dartmouth|dartmouth college|NH|G|ED:11-01;RD:01-03|Quarter system with flexible terms off|00693E
+Cornell|cornell university|NY|-|ED:11-01;RD:01-02||B31B1B
+MIT|massachusetts institute of technology|MA|P+|A|First semester is pass/no record|A31F34
+Caltech|california institute of technology|CA|+|EA:11-01;RD:01-03|Honor code; first two terms pass/fail|FF6C0C
+UChicago|university of chicago|IL|C|ED:11-01;EA:11-01;RD:01-05|The Core: roughly a third of your classes are shared|800000
+Duke|duke university|NC|S|ED:11-01;RD:01-02||012169
+Northwestern|northwestern university|IL|S|ED:11-01;RD:01-02|Quarter system: more classes, faster pace|4E2A84
+Johns Hopkins|johns hopkins university|MD|-|ED:11-01;RD:01-02||002D72
+Rice|rice university|TX|+|ED:11-01;RD:01-04|Residential colleges with their own traditions|00205B
+Vanderbilt|vanderbilt university|TN|SG|E||CFAE70
+WashU|washington university in st louis|MO|+|ED:11-01;RD:01-02||A51417
+Notre Dame|university of notre dame|IN|S|R||C99700
+Georgetown|georgetown university|DC||EA:11-01;RD:01-10||041E42
+Emory|emory university|GA||E||0033A0
+Carnegie Mellon|carnegie mellon university|PA|-|ED:11-01;RD:01-03||C41230
+USC|university of southern california|CA|SG|EA:11-01;RD:01-15||990000
+NYU|new york university|NY||ED:11-01;RD:01-05|No traditional campus: the city is the quad|57068C
+Tufts|tufts university|MA|+|ED:11-01;RD:01-04||3E8EDE
+Boston College|boston college|MA|S|ED:11-01;RD:01-02||8A100B
+Boston University|boston university|MA||ED:11-01;RD:01-04||CC0000
+Northeastern|northeastern university|MA|K|ED:11-01;EA:11-01;RD:01-01|Co-op: alternate semesters of full-time paid work|D41B2C
+UC Berkeley|university of california berkeley|CA|S-|U||FDB515
+UCLA|university of california los angeles|CA|S-|U||2774AE
+UC San Diego|university of california san diego|CA||U|Six undergraduate colleges, each with its own requirements|00629B
+UC Santa Barbara|university of california santa barbara|CA||U|Campus sits right on the Pacific|FEBC11
+UC Davis|university of california davis|CA||U||DAAA00
+UC Irvine|university of california irvine|CA||U||0064A4
+UC Santa Cruz|university of california santa cruz|CA||U|Redwood forest campus; narrative evaluations available|FDC700
+UC Riverside|university of california riverside|CA||U||2D6CC0
+Michigan|university of michigan ann arbor|MI|S|EA:11-01;RD:02-01||FFCB05
+UVA|university of virginia main campus|VA|S|ED:11-01;EA:11-01;RD:01-05||E57200
+UNC Chapel Hill|university of north carolina at chapel hill|NC|S|EA:10-15;RD:01-15||7BAFD4
+Georgia Tech|georgia institute of technology main campus|GA|SK-|EA:11-01;RD:01-04||B3A369
+UT Austin|the university of texas at austin|TX|S|Priority:11-01;RD:12-01||BF5700
+Florida|university of florida|FL|SG|RD:11-01||FA4616
+Wisconsin|university of wisconsin madison|WI|S|EA:11-01;RD:01-15||C5050C
+UIUC|university of illinois urbana champaign|IL|S|EA:11-01;RD:01-05||E84A27
+UW Seattle|university of washington seattle campus|WA|S|RD:11-15||4B2E83
+Ohio State|ohio state university main campus|OH|S|EA:11-01;RD:02-01||BB0000
+Penn State|pennsylvania state university main campus|PA|SG|EA:11-01;RD:11-30||1E407C
+Purdue|purdue university main campus|IN|SK|EA:11-01;RD:01-15||CFB991
+Maryland|university of maryland college park|MD|S|EA:11-01;RD:01-20||E21833
+Rutgers|rutgers university new brunswick|NJ|S|EA:11-01;RD:12-01||CC0033
+Virginia Tech|virginia polytechnic institute and state university|VA|SK|ED:11-01;EA:11-15;RD:01-15||861F41
+Texas A&M|texas a m university college station|TX|S|RD:12-01||500000
+Georgia|university of georgia|GA|SG|EA:10-15;RD:01-01||BA0C2F
+Clemson|clemson university|SC|SKG|L||F56600
+Minnesota|university of minnesota twin cities|MN|S|EA:11-01;RD:01-01||7A0019
+Indiana|indiana university bloomington|IN|SG|EA:11-01;RD:02-01||990000
+Michigan State|michigan state university|MI|S|L||18453B
+CU Boulder|university of colorado boulder|CO|S|EA:11-15;RD:01-15||CFB87C
+Arizona State|arizona state university campus immersion/arizona state university tempe|AZ|S|L||8C1D40
+Arizona|university of arizona|AZ|S|L||CC0033
+Oregon|university of oregon|OR|S|EA:11-01;RD:01-15||FEE123
+Oregon State|oregon state university|OR|S|EA:11-01;RD:02-01||DC4405
+Washington State|washington state university|WA|S|L||981E32
+Utah|university of utah|UT|S|L||CC0000
+Iowa|university of iowa|IA|S|L||FFCD00
+Iowa State|iowa state university|IA|S|L||C8102E
+Pitt|university of pittsburgh pittsburgh campus|PA|S|L||003594
+Rochester|university of rochester|NY|O|ED:11-01;RD:01-05|No required subjects outside your major|FFD100
+Case Western|case western reserve university|OH||ED:11-01;EA:11-01;RD:01-15||003071
+Tulane|tulane university of louisiana|LA|G|ED:11-01;EA:11-15;RD:01-15||006747
+Wake Forest|wake forest university|NC|SG|E||9E7E38
+Brandeis|brandeis university|MA||E||003478
+Lehigh|lehigh university|PA|G|E||653819
+Villanova|villanova university|PA||ED:11-01;EA:11-01;RD:01-15||00205B
+Syracuse|syracuse university|NY|S|ED:11-15;RD:01-05||F76900
+Miami|university of miami|FL|S|ED:11-01;EA:11-01;RD:01-06||F47321
+Fordham|fordham university|NY||EA:11-01;RD:01-01||860038
+George Washington|george washington university|DC||ED:11-01;RD:01-05||033C5A
+American|american university|DC||ED:11-15;EA:11-15;RD:01-15||C4122F
+Drexel|drexel university|PA|K|ED:11-01;EA:11-01;RD:01-15|Up to three paid co-ops before you graduate|FFC600
+RIT|rochester institute of technology|NY|K|ED:11-15;RD:01-15||F76902
+RPI|rensselaer polytechnic institute|NY|P|ED:11-01;RD:01-15||D6001C
+WPI|worcester polytechnic institute|MA|P+|ED:11-01;EA:11-01;RD:01-15|Project-based curriculum in seven-week terms|AC2B37
+Stevens|stevens institute of technology|NJ|K|ED:11-15;RD:01-15||A32638
+Olin|franklin w olin college of engineering|MA|P+|RD:01-05|Every course is built around engineering projects|00A9E0
+Harvey Mudd|harvey mudd college|CA|+|ED:11-15;RD:01-05|Shared STEM core; cross-register at the other Claremont colleges|FDB913
+Pomona|pomona college|CA|+|ED:11-01;RD:01-08|Cross-register across the five Claremont colleges|0057B8
+Claremont McKenna|claremont mckenna college|CA||E|Cross-register across the five Claremont colleges|981A31
+Scripps|scripps college|CA||E|Women's college in the Claremont consortium|34574A
+Pitzer|pitzer college|CA||E||F7941E
+Williams|williams college|MA|+|E|Oxford-style tutorials: two students, one professor|500082
+Amherst|amherst college|MA|O|ED:11-01;RD:01-03|Open curriculum; Five College consortium|3F1F69
+Swarthmore|swarthmore college|PA|+|ED:11-15;RD:01-04||862633
+Wellesley|wellesley college|MA||ED:11-01;RD:01-08|Women's college; cross-register at MIT|002776
+Bowdoin|bowdoin college|ME||ED:11-15;RD:01-05||
+Middlebury|middlebury college|VT||E||0D395F
+Carleton|carleton college|MN|+|ED:11-15;RD:01-15||F1BE48
+Grinnell|grinnell college|IA|O+|ED:11-15;RD:01-15|Individually advised curriculum: no core requirements|CC0000
+Davidson|davidson college|NC|+|ED:11-15;RD:01-05|Strict honor code; take-home, unproctored exams|D42121
+Haverford|haverford college|PA|+|ED:11-15;RD:01-05|Honor code governs exams and student life|A6192E
+Colby|colby college|ME||ED:11-15;RD:01-01||002169
+Bates|bates college|ME||ED:11-15;RD:01-10||881124
+Hamilton|hamilton college|NY|O|ED:11-15;RD:01-01|Open curriculum with a strong writing focus|002F86
+Vassar|vassar college|NY|O|ED:11-15;RD:01-01||8C2232
+Wesleyan|wesleyan university|CT|O|ED:11-15;RD:01-01||C8102E
+Smith|smith college|MA|O|ED:11-15;RD:01-15|Women's college with an open curriculum|0055A4
+Barnard|barnard college|NY||E|Women's college inside Columbia University|6CACE4
+Colorado College|colorado college|CO|P|ED:11-01;EA:11-10;RD:01-15|Block Plan: one class at a time, three and a half weeks each|D4AF37
+Macalester|macalester college|MN|+|ED:11-01;RD:01-15||D44420
+Oberlin|oberlin college|OH||ED:11-15;RD:01-15|College and conservatory on one campus|A6192E
+Kenyon|kenyon college|OH||ED:11-15;RD:01-15||4B2E83
+Reed|reed college|OR|C|ED:11-15;EA:11-01;RD:01-15|Humanities 110 for everyone and a senior thesis to finish|A70E16
+Whitman|whitman college|WA|+|ED:11-15;RD:01-15||002D62
+Occidental|occidental college|CA||ED:11-01;RD:01-10||F47920
+Bryn Mawr|bryn mawr college|PA||ED:11-15;RD:01-15|Women's college; cross-register at Haverford and Penn|
+Mount Holyoke|mount holyoke college|MA||ED:11-15;RD:01-15|Women's college; Five College consortium|0F2D52
+Skidmore|skidmore college|NY||ED:11-15;RD:01-15||006A4E
+Bard|bard college|NY||EA:11-01;RD:01-01||
+St. Olaf|st olaf college|MN||ED:11-15;EA:11-15;RD:01-15||F1BE48
+Denison|denison university|OH||ED:11-15;RD:01-15||C8102E
+Lewis & Clark|lewis clark college|OR||EA:11-01;RD:01-15||F47920
+Sarah Lawrence|sarah lawrence college|NY|O|ED:11-01;RD:01-15|Seminars plus one-on-one conferences with faculty|
+Furman|furman university|SC||ED:11-01;EA:11-01;RD:01-15||582C83
+Bucknell|bucknell university|PA|G|ED:11-15;RD:01-15||E87722
+Colgate|colgate university|NY|G|ED:11-15;RD:01-15||821019
+Washington and Lee|washington and lee university|VA|G|E||0039A6
+Richmond|university of richmond|VA||ED:11-15;EA:11-01;RD:01-01||990000
+Elon|elon university|NC||ED:11-01;EA:11-10;RD:01-10||73000A
+Babson|babson college|MA|P|ED:11-01;EA:11-01;RD:01-02|Every first-year team launches a real business|006644
+Denver|university of denver|CO||ED:11-01;EA:11-01;RD:01-15||8B2332
+Spelman|spelman college|GA||ED:11-01;EA:11-15;RD:02-01|Historically Black women's college|0033A0
+Morehouse|morehouse college|GA||ED:11-01;EA:11-01;RD:02-15|Historically Black men's college|862633
+Howard|howard university|DC||ED:11-01;EA:11-01;RD:02-15||E51937
+Hampton|hampton university|VA||L||0067B1
+Florida A&M|florida agricultural and mechanical university|FL||L||F47920
+NC A&T|north carolina a t state university|NC||L||FDB927
+Xavier (LA)|xavier university of louisiana|LA||L||CFB53B
+Cal Poly SLO|california polytechnic state university san luis obispo|CA|P|U|Learn by Doing; you apply straight into your major|154734
+San Diego State|san diego state university|CA|S|U||A6192E
+San José State|san jose state university|CA||U||0055A2
+Cal State Long Beach|california state university long beach|CA||U||ECAA00
+UCF|university of central florida|FL|S|L||BA9B37
+Florida State|florida state university|FL|SG|EA:10-15;RD:12-01||782F40
+USF|university of south florida|FL||L||006747
+FIU|florida international university|FL||L||B6862C
+Houston|university of houston|TX||L||C8102E
+Texas Tech|texas tech university|TX|S|L||CC0000
+UT Dallas|the university of texas at dallas|TX||L||E87500
+Alabama|the university of alabama|AL|SG|L||9E1B32
+Auburn|auburn university|AL|SG|EA:11-01;RD:02-01||E87722
+LSU|louisiana state university and agricultural mechanical college|LA|SG|L||461D7C
+Ole Miss|university of mississippi|MS|SG|L||CE1126
+Tennessee|the university of tennessee knoxville|TN|S|EA:11-01;RD:12-15||FF8200
+Kentucky|university of kentucky|KY|S|L||0033A0
+South Carolina|university of south carolina columbia|SC|SG|EA:10-15;RD:12-01||73000A
+NC State|north carolina state university at raleigh|NC|SK|EA:11-01;RD:01-15||CC0000
+James Madison|james madison university|VA||EA:11-01;RD:01-15||450084
+William & Mary|william mary/college of william and mary|VA||ED:11-01;RD:01-05||115740
+Delaware|university of delaware|DE||EA:11-15;RD:01-15||00539F
+UConn|university of connecticut|CT|S|EA:12-01;RD:01-15||1F3A93
+UMass Amherst|university of massachusetts amherst|MA||EA:11-05;RD:01-15|Five College consortium with Amherst, Smith and Mount Holyoke|881C1C
+Vermont|university of vermont|VT||EA:11-01;RD:01-15||007155
+New Hampshire|university of new hampshire main campus|NH||EA:11-15;RD:02-01||003591
+Binghamton|suny at binghamton/binghamton university|NY||EA:11-15;RD:01-15||005A43
+Stony Brook|stony brook university|NY||EA:12-01;RD:01-15||990000
+Buffalo|university at buffalo|NY||EA:11-01;RD:02-01||005BBB
+Baruch|cuny bernard m baruch college|NY||RD:02-01||
+Hunter|cuny hunter college|NY||RD:02-01||5F259F
+Temple|temple university|PA||EA:11-01;RD:02-01||9D2235
+Cincinnati|university of cincinnati main campus|OH|K|L|Where co-op was invented in 1906|E00122
+Miami (OH)|miami university oxford|OH|G|ED:11-01;EA:12-01;RD:02-01||C3142D
+Kansas|university of kansas|KS|S|L||0051BA
+Nebraska|university of nebraska lincoln|NE|S|L||E41C38
+Missouri|university of missouri columbia|MO|SG|L||F1B82D
+Oklahoma|university of oklahoma norman campus|OK|SG|L||841617
+New Mexico|university of new mexico main campus|NM||L||BA0C2F
+Colorado School of Mines|colorado school of mines|CO|P|EA:11-01;RD:01-15||21314D
+Montana State|montana state university|MT||L||B9975B
+Boise State|boise state university|ID||L||D64309
+Gonzaga|gonzaga university|WA||EA:11-15;RD:02-01||C8102E
+Santa Clara|santa clara university|CA||ED:11-01;EA:11-01;RD:01-07||9E1B32
+Loyola Marymount|loyola marymount university|CA||EA:11-01;RD:01-15||AB0C2F
+Pepperdine|pepperdine university|CA||EA:11-01;RD:01-15||F68D2E
+Chapman|chapman university|CA||ED:11-01;EA:11-01;RD:01-15||A50034
+San Francisco|university of san francisco|CA||EA:11-15;RD:01-15||00543C
+SMU|southern methodist university|TX|G|ED:11-01;EA:11-01;RD:01-15||CC0035
+TCU|texas christian university|TX|SG|ED:11-01;EA:11-01;RD:02-01||4D1979
+Baylor|baylor university|TX|S|ED:11-01;EA:11-01;RD:02-01||FFB81C
+BYU|brigham young university|UT|S|RD:12-15||0062B8
+Loyola Chicago|loyola university chicago|IL||L||8A2432
+DePaul|depaul university|IL||L||005EB8
+Marquette|marquette university|WI||L||FFCC00
+Rhodes|rhodes college|TN||ED:11-01;EA:11-15;RD:01-15||A6192E
+Sewanee|the university of the south|TN||ED:11-15;EA:12-01;RD:02-01||582C83
+Berea|berea college|KY|P|L|No tuition for any student; everyone works a campus job|1D4F91
+Rose-Hulman|rose hulman institute of technology|IN|P|EA:11-01;RD:02-01||A6192E
+Kettering|kettering university|MI|K|L|Paid co-op starts in your first year|FFC72C
+Georgia State|georgia state university|GA||EA:11-01;RD:03-01||0039A6
+Emerson|emerson college|MA||EA:11-01;RD:01-15||4F2683
+RISD|rhode island school of design|RI|AP|ED:11-01;RD:01-15|Portfolio required|
+Pratt|pratt institute main|NY|A|EA:11-01;RD:01-05|Portfolio required|
+The New School|the new school|NY|A|EA:11-01;RD:01-15|Home of Parsons School of Design|E82E21
+SCAD|savannah college of art and design|GA|A|L||

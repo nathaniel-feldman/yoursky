@@ -1,0 +1,4 @@
+scripts/cache/
+scripts/_build.log
+.DS_Store
+.claude/

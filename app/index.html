@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0d0e11">
+  <meta name="description" content="Your Sky: college search where you are the sun. The better a school fits you, the closer it orbits.">
+  <title>Your Sky</title>
+  <meta property="og:title" content="Your Sky">
+  <meta property="og:description" content="You are the sun. Colleges are planets. The better a school fits you, the closer it orbits.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://findyoursky.com/">
+  <meta property="og:image" content="https://findyoursky.com/og.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Your Sky: a sand planet with colleges orbiting it. You are the sun. Colleges are planets.">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://findyoursky.com/og.jpg">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css?v=19">
+</head>
+<body data-screen="landing">
+  <canvas id="sky" aria-hidden="true"></canvas>
+  <div class="grain" aria-hidden="true"></div>
+  <canvas id="scene" aria-hidden="true"></canvas>
+  <main id="app"></main>
+  <canvas id="grit" aria-hidden="true"></canvas>
+  <canvas id="fx" aria-hidden="true"></canvas>
+  <div id="backdrop" class="backdrop" hidden></div>
+  <div id="sheet" class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title" hidden>
+    <div class="sheet-grip" id="sheet-grip"><span></span></div>
+    <button class="sheet-close" id="sheet-close" aria-label="Close details">
+      <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>
+    <div class="sheet-body" id="sheet-body"></div>
+  </div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="data.js?v=19"></script>
+  <script src="config.js?v=19"></script>
+  <script src="engine.js?v=19"></script>
+  <script src="sky.js?v=19"></script>
+  <script src="app.js?v=19"></script>
+</body>
+</html>
