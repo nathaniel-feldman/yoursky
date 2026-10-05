@@ -698,6 +698,10 @@
       <section class="r-sec" id="sec-dates" aria-labelledby="h-dates"><h2 id="h-dates" class="r-h">Deadlines</h2><div id="dates-body"></div></section>
       <section class="r-sec" id="sec-share" aria-labelledby="h-share"><h2 id="h-share" class="r-h">Share</h2><div id="share-body"></div></section>
       ${S.friend ? `<section class="r-sec" id="sec-compare" aria-labelledby="h-compare"><h2 id="h-compare" class="r-h">You + ${esc(S.friend.n || 'your friend')}</h2><div id="compare-body"></div></section>` : ''}
+      <footer class="r-foot" data-rv>
+        <a class="btn ghost" href="mailto:contact@findyoursky.com?subject=Your%20Sky">Get in touch</a>
+        <p class="fine">contact@findyoursky.com</p>
+      </footer>
       <nav class="rail" aria-label="Progress through your results"><span class="rail-label mono" id="rail-label" aria-live="polite">${secs[0][1]}</span>
         <div class="rail-track">${secs.map(([id, l]) => `<button type="button" data-sec="${id}" data-label="${l}" aria-label="Jump to ${l}"><i></i></button>`).join('')}</div></nav>
     </section>`);

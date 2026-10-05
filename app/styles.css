@@ -487,6 +487,9 @@ input[type="range"].unset::-moz-range-thumb { filter: grayscale(1) brightness(0.
 .rail-track button::before { background: rgba(255, 255, 255, 0.13); }
 .rail-track button i { display: block; background: var(--chrome); transform-origin: left; transform: scaleX(0); }
 
+.r-foot { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 44px 0 28px; margin-top: 12px; border-top: 1px solid var(--line); }
+.r-foot .btn { min-width: 180px; font-family: var(--mono); font-weight: 500; letter-spacing: 0.04em; }
+.r-foot .fine { margin-top: 8px; }
 /* Scroll-driven results (values set by ScrollSand from scroll position) */
 .r-h { padding-bottom: 0.08em; }
 .bal { flex-grow: calc(1 + (var(--f, 1) - 1) * var(--p, 0)); flex-basis: 0; transition: none; }
