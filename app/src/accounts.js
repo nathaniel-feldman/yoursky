@@ -1,6 +1,6 @@
 // Accounts: sign-in, saving skies, the account page and friends. Everything here is optional: the quiz never needs it,
 // and with no backend configured (env.js) none of it renders.
-import { accountsOn, MOCK } from './env.js';
+import { accountsOn, MOCK, OTP_LENGTH } from './env.js';
 import { getBackend, shouldLoadAtStart } from './backend.js';
 import { captureReferral, getReferral } from './referral.js';
 import { saveStash, loadStash, clearStash, snapshotOf } from './stash.js';
@@ -232,10 +232,10 @@ export function createAccounts(ctx) {
       panel.innerHTML = `<div class="auth">
         <p class="eyebrow">${eyebrow}</p>
         <h2 id="sheet-title" class="auth-t">Check your email</h2>
-        <p class="hint">We sent a 6-digit code to <strong>${esc(email)}</strong>. You can also tap the link in that email.</p>
+        <p class="hint">We sent a sign-in code to <strong>${esc(email)}</strong>. You can also tap the link in that email.</p>
         <form class="auth-form" id="code-form" novalidate>
           <label class="fieldline" for="auth-code">Code</label>
-          <input id="auth-code" class="textin code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]*" maxlength="6" placeholder="000000" required>
+          <input id="auth-code" class="textin code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]*" maxlength="10" placeholder="${'0'.repeat(OTP_LENGTH)}" required>
           <p class="auth-err" id="auth-err" role="alert"></p>
           <button class="btn chrome wide" id="auth-verify" type="submit">Verify</button>
         </form>
@@ -246,7 +246,7 @@ export function createAccounts(ctx) {
       const t = setInterval(() => { left--; resend.textContent = left > 0 ? `Resend in ${left}s` : 'Send a new code'; resend.disabled = left > 0; if (left <= 0) clearInterval(t); }, 1000);
       const submit = async (e) => {
         e?.preventDefault();
-        if (!/^\d{6}$/.test(code.value.trim())) { err.textContent = 'Enter the 6-digit code from the email.'; return; }
+        if (!/^\d{6,10}$/.test(code.value.trim())) { err.textContent = 'Enter the code from the email.'; return; }
         const btn = $('#auth-verify', panel); btn.disabled = true; btn.textContent = 'Checking…'; err.textContent = '';
         try {
           user = await backend.verifyCode(email, code.value);
@@ -255,7 +255,11 @@ export function createAccounts(ctx) {
         } catch (ex) { err.textContent = ex.message; btn.disabled = false; btn.textContent = 'Verify'; code.select(); }
       };
       $('#code-form', panel).addEventListener('submit', submit);
-      code.addEventListener('input', () => { code.value = code.value.replace(/\D/g, '').slice(0, 6); if (code.value.length === 6) submit(); });
+      // Pasting or autofilling the whole code submits it; typing submits at the expected length.
+      code.addEventListener('input', (e) => {
+        code.value = code.value.replace(/\D/g, '').slice(0, 10);
+        if (code.value.length === OTP_LENGTH || (e.inputType === 'insertFromPaste' && code.value.length >= 6)) submit();
+      });
       $('#auth-back', panel).addEventListener('click', () => { clearInterval(t); stepEmail(panel); });
       resend.addEventListener('click', async () => {
         resend.disabled = true;
