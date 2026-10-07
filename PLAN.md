@@ -1,6 +1,6 @@
 # Your Sky: accounts, Pro, chances, cost and friend skies
 
-Status: **Phase 0.5 (refactor) is next.** Every recommendation in section 7 was approved on 2026-10-07. The refactor is waiting for Node.js to be installed.
+Status: **Phase 0.5 (refactor) is done on this branch and waiting for review.** Phase 1 starts after your go-ahead and the Supabase setup. Every recommendation in section 7 was approved on 2026-10-07.
 
 Branch: `feature/accounts-and-pro`. Nothing is committed to, pushed to or merged into `main`.
 
@@ -137,7 +137,17 @@ RLS and grants:
 
 **Known bug found while making the baseline (to fix in Phase 3, not during the refactor):** `costOf` can return a negative estimate. Scorecard reports a negative net price for some low-income brackets, so a few cards show something like "$-2.0k". Clamp it to $0 and say "grants can exceed cost."
 
-**Phase 0.5: Refactor (approved).** Vite, ES modules, Vitest, unit tests for the current `score`/`chanceOf`/`costOf`, the parity check, and the Pages build settings. No behavior changes.
+**Phase 0.5: Refactor (approved).**
+
+Done 2026-10-07:
+- `app/src/` holds ES modules. `data.js` became `data.json`. Static files moved to `app/public/`.
+- Vite 8 and Vitest 5.
+- Parity test passes against `2ee6dd0`, and a deliberately broken weight makes it fail.
+- Manual check of the production build at 375px and desktop: landing, profile, questions, deck, results, detail sheet, share, friend link and About page. No console errors.
+- Bundle: one 306 KB script (92 KB gzipped) instead of five unminified scripts totaling about 400 KB, and CSS went from 45 KB to 38 KB.
+- Pages build settings change at merge time, not before.
+
+Original scope: Vite, ES modules, Vitest, unit tests for the current `score`/`chanceOf`/`costOf`, the parity check, and the Pages build settings. No behavior changes.
 
 **Phase 1: Accounts and saved skies.**
 - Persist the anonymous result to localStorage when you reach the results screen.
