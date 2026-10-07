@@ -139,6 +139,12 @@ describe('CORS', () => {
     expect(await origin('https://feature-x.yoursky.pages.dev')).toBe('https://feature-x.yoursky.pages.dev');
     expect(await origin('http://localhost:5173', 'OPTIONS')).toBe('http://localhost:5173');
     expect(await origin('https://staging.example.com')).toBe('https://staging.example.com');
+    expect(await origin('https://yoursky.nfeldman2000.workers.dev')).toBe('https://yoursky.nfeldman2000.workers.dev');
+    expect(await origin('https://feature-accounts-and-pro-yoursky.nfeldman2000.workers.dev')).toBe('https://feature-accounts-and-pro-yoursky.nfeldman2000.workers.dev');
+    expect(await origin('https://evil.workers.dev')).toBe('https://findyoursky.com');
+    expect(await origin('https://evilyoursky.attacker.workers.dev')).toBe('https://findyoursky.com');
+    expect(await origin('https://yoursky.attacker.workers.dev')).toBe('https://findyoursky.com');
+    expect(await origin('https://phish-other.someone.workers.dev')).toBe('https://findyoursky.com');
     expect(await origin('https://evil.com')).toBe('https://findyoursky.com');
   });
 });

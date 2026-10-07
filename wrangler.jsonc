@@ -1,0 +1,8 @@
+// Cloudflare Worker that serves the built site (static assets only). Workers Builds runs `npm run build`, then
+// `npx wrangler deploy` uploads dist/. _headers and _redirects in app/public apply as usual.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "yoursky",
+  "compatibility_date": "2026-10-01",
+  "assets": { "directory": "./dist" }
+}

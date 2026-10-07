@@ -4,9 +4,16 @@ export const json = (body, status = 200, headers = {}) =>
   new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json', ...headers } });
 
 const DEFAULT_ORIGINS = ['https://findyoursky.com', 'https://www.findyoursky.com'];
-const PATTERNS = [/^http:\/\/localhost:\d+$/, /^http:\/\/127\.0\.0\.1:\d+$/, /^https:\/\/[a-z0-9-]+\.[a-z0-9-]+\.pages\.dev$/];
+// Local dev, and preview deployments on Cloudflare (Pages: branch.project.pages.dev; Workers: name.account.workers.dev
+// and branch-name.account.workers.dev, pinned to this account's subdomain).
+const PATTERNS = [
+  /^http:\/\/localhost:\d+$/,
+  /^http:\/\/127\.0\.0\.1:\d+$/,
+  /^https:\/\/[a-z0-9-]+\.[a-z0-9-]+\.pages\.dev$/,
+  /^https:\/\/([a-z0-9-]+-)?yoursky\.nfeldman2000\.workers\.dev$/,
+];
 
-// CORS for browser calls. ALLOWED_ORIGINS (comma-separated) adds exact origins; Pages preview and localhost are allowed.
+// CORS for browser calls. ALLOWED_ORIGINS (comma-separated) adds exact origins; previews and localhost are allowed.
 export function corsFor(extra = '') {
   const exact = new Set([...DEFAULT_ORIGINS, ...extra.split(',').map((s) => s.trim()).filter(Boolean)]);
   return (req) => {
