@@ -4,10 +4,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "node scripts/sync_shared.mjs && vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "sync:shared": "node scripts/sync_shared.mjs",
+    "check:functions": "deno check --config supabase/functions/deno.json supabase/functions/*/index.ts"
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.5.8",
