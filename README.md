@@ -11,7 +11,7 @@ Requires Node.js 22 or newer.
 ```bash
 npm install
 npm run dev        # http://localhost:5173, account-free unless .env has Supabase keys
-npm run dev:mock   # same, with a fake in-browser backend: try sign-in (code 000000), saving, Pro and friends
+npm run dev:mock   # http://localhost:5174, with a fake in-browser backend: try sign-in (code 000000), saving, Pro and friends
 npm test           # all tests (Vitest), including database RLS tests in an in-process Postgres
 npm run build      # production build into dist/
 npm run preview    # serve dist/ at http://localhost:4173
