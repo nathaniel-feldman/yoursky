@@ -104,7 +104,7 @@ Before deploying functions after an engine change, run `npm run sync:shared` (th
 
 ## Tests
 
-- **Parity:** `tests/parity.test.js` proves the module engine matches the pre-refactor scripts. It checks six fixed students across all 203 schools.
+- **Parity:** `tests/parity.test.js` proves the module engine matches the pre-refactor scripts. It checks six fixed students across all 203 schools. After an intentional scoring change, regenerate the fixture with `node scripts/make_baseline.mjs current` and check the diff.
 - **Client:** `tests/client.test.js` covers referral capture, the anonymous stash, in-app browser detection and checkout links.
 - **Edge Functions:** `tests/functions/` covers webhook signatures, idempotency and refunds through the real database, the chances heuristic, what free vs. Pro callers receive, token verification and CORS.
 - **Database:** `tests/db/` runs the real migrations in PGlite with Supabase's roles and default grants. It checks every RLS policy with multiple accounts, and checks that the importer's output fits the schema.
