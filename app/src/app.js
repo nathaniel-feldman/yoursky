@@ -3,6 +3,10 @@ import ORBIT_DATA from './data.json';
 import { CFG } from './config.js';
 import { ENGINE } from './engine.js';
 import { SKY } from './sky.js';
+import { accountsOn, proOn } from './env.js';
+import { track } from './api.js';
+import { createAccounts } from './accounts.js';
+import { createPro } from './pro.js';
 
 const { MAJORS, POPULAR, METALS, REGIONS, STATES, QUESTIONS, FOLLOWUPS, ACTIVITIES, INCOMES } = CFG;
 const E = ENGINE;
@@ -23,6 +27,9 @@ const ICON = {
   warn: '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M12 3l9.5 17h-19z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M12 10v4.5M12 17.2v.3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
   ok: '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 12.3l2.6 2.6L16 9.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   close: '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+  back: '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M15 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  lock: '<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><rect x="5" y="10.5" width="14" height="10" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8.5 10.5V8a3.5 3.5 0 017 0v2.5" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>',
+  pin: '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M12 3.5l2.6 5.3 5.8.8-4.2 4.1 1 5.8L12 16.8l-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>',
 };
 // A school's color, lifted so it reads on graphite. Returns null when a school has none.
 function accentOf(s) {
@@ -48,6 +55,8 @@ const piles = (root) => SKY.piles(root, PILLS);
 SKY.hooks.drain = (rect, grains) => fx.drain(rect, grains);
 const CHANCE = { reach: 'Reach', target: 'Target', likely: 'Likely' };
 const pill = (cat) => `<span class="pill ${cat}">${CHANCE[cat]}</span>`;
+// The chance pill for a school: today's client estimate when Pro is off; server data or a teaser when it's on.
+const chancePill = (id, cat) => (proOn ? pro.pill(id, cat) : pill(cat));
 
 // ---- State -------------------------------------------------------------
 const fresh = () => ({
@@ -141,15 +150,16 @@ let formed = false;
 function Landing() {
   const f = S.friend;
   const el = h(`<section class="screen landing">
-    <header class="topbar"><span class="wordmark">Your Sky</span></header>
+    <header class="topbar"><span class="wordmark">Your Sky</span>${accounts.accountButton()}</header>
     <div class="landing-copy settle">
-      ${f ? `<p class="eyebrow">${esc(f.n || 'A friend')} sent you their sky</p>` : ''}
+      ${f ? `<p class="eyebrow">${esc(f.n || 'A friend')} sent you their sky</p>` : accounts.invited() ? '<p class="eyebrow">A friend invited you to compare skies</p>' : ''}
       <h1 class="hook" id="hook"><span class="line metal">You are the sun.</span><span class="line metal italic">Colleges are planets.</span></h1>
       <p class="lede">${f ? 'Build yours and see where you overlap.' : 'The better a school fits you, the closer it orbits.'}</p>
       <button class="btn chrome big" id="start">${f ? 'Build my sky' : 'Start'}</button>
       <p class="fine">Four minutes. No sign-up. Data from the U.S. College Scorecard. <a href="about.html">About</a></p>
     </div>
   </section>`);
+  accounts.wireAccountButton(el);
   layoutLanding();
   you.set('sunness', 1);
   if (f && f.k.length) {
@@ -161,6 +171,7 @@ function Landing() {
     main.sunText = '';
   }
   $('#start', el).addEventListener('click', () => {
+    track('quiz_started');
     fx.release(true); $('#hook', el).classList.remove('forming');
     you.set('tint', [1, 1, 1]);
     go('profile');
@@ -546,7 +557,9 @@ function Deck() {
   return el;
 }
 function cardHTML(id) {
-  const s = byId.get(id), r = resultOf(id), ex = E.explain(s, r), c = r.cost;
+  const s = byId.get(id), r = resultOf(id), ex = E.explain(s, r), c = { ...r.cost };
+  const proNet = proOn ? pro.netFor(id) : null;
+  if (proNet != null) c.est = proNet;
   const sat = s.sat ? `${s.sat[0]}–${s.sat[1]}` : s.act ? `ACT ${s.act[0]}–${s.act[1]}` : 'Not reported';
   const scale = Math.max(c.sticker, 1);
   return `<article class="card ${s.col ? 'has-acc' : ''}" ${accentStyle(s)} data-id="${id}" tabindex="-1" aria-label="${esc(s.n)}, ${r.fit}% fit">
@@ -556,18 +569,18 @@ function cardHTML(id) {
     </div>
     <h3 class="card-name">${esc(s.n)}</h3>
     <p class="card-sub">${esc(s.c)}, ${s.s} · ${s.pub ? 'Public' : 'Private'} · ${fmtInt(s.size)} students</p>
-    <div class="card-row">${pill(r.chance.cat)}<span class="mono dim">Admit ${pct(s.adm)}</span><span class="mono dim">SAT ${sat}</span></div>
+    <div class="card-row">${chancePill(id, r.chance.cat)}<span class="mono dim">Admit ${pct(s.adm)}</span><span class="mono dim">SAT ${sat}</span></div>
     <ul class="why">${ex.why.map((w) => `<li>${esc(w)}</li>`).join('')}</ul>
     <p class="heads">${ICON.warn}<span>${esc(ex.heads)}</span></p>
     ${s.note && !ex.why.includes(s.note) ? `<p class="card-note">${esc(s.note)}</p>` : ''}
     <div class="cost">
-      <div class="cost-line"><span>Est. for you</span><strong>${money(c.est)}<small>/yr</small></strong></div>
+      <div class="cost-line"><span>${proOn && proNet == null ? 'Avg. after grants' : 'Est. for you'}</span><strong>${money(c.est)}<small>/yr</small></strong></div>
       <div class="bar"><i class="est" style="width:${(c.est / scale) * 100}%"></i></div>
       <div class="cost-line dim"><span>Sticker price</span><span>${money(c.sticker)}/yr</span></div>
     </div>
     <dl class="facts">
       <div><dt>Grad rate</dt><dd>${pct(s.grad)}</dd></div>
-      <div><dt>Earnings at 10 yrs</dt><dd>${money(s.earn)}</dd></div>
+      <div><dt>Earnings at 10 yrs</dt><dd>${proOn ? pro.earningsCell(s) : money(s.earn)}</dd></div>
       <div><dt>Students per prof</dt><dd>${s.sfr ?? '—'}</dd></div>
     </dl>
     <div class="lean keep-lean">Keep</div><div class="lean pass-lean">Pass</div>
@@ -690,12 +703,15 @@ function Results() {
   const name = S.profile.name.trim();
   const secs = S.friend ? [...SECTIONS, ['compare', 'Compare']] : SECTIONS;
   const el = h(`<section class="screen results">
+    ${accountsOn ? `<div class="results-acct">${accounts.accountButton()}</div>` : ''}
     <section class="r-sec" id="sec-sky" aria-labelledby="h-sky">
       <div class="r-head settle"><p class="eyebrow">Results</p><h1 id="h-sky" class="r-title metal">${name ? esc(name) + '’s sky' : 'Your sky'}</h1>
         <p class="hint">Closest = best fit. Tap a planet.</p></div>
       <div class="sky-wrap"><canvas id="rsky" role="img" aria-label="Your kept schools orbiting you; the list below has the same information."></canvas><div class="empty-sky" id="empty-sky" hidden></div></div>
+      <div class="hidden-slot" id="hidden-slot"></div>
       <div class="scroll-cue" id="cue" aria-hidden="true">${'<i></i>'.repeat(7)}<b></b></div>
     </section>
+    ${accounts.saveCardHTML()}
     <section class="r-sec" id="sec-list" aria-labelledby="h-list"><h2 id="h-list" class="r-h">Your list</h2><div id="list-body"></div></section>
     <section class="r-sec" id="sec-money" aria-labelledby="h-money"><h2 id="h-money" class="r-h">Money</h2><div id="money-body"></div></section>
     <section class="r-sec" id="sec-dates" aria-labelledby="h-dates"><h2 id="h-dates" class="r-h">Deadlines</h2><div id="dates-body"></div></section>
@@ -718,8 +734,10 @@ function Results() {
     resultsSky.sunText = name; resultsSky.colorize = true;
     resultsSky.setView({ sx: 0.5, sy: 0.5, sr: 22, ox: 0.5, oy: 0.5, orbit: 1, tilt: 0.8, labels: 99, pscale: 2.2 });
     resultsSky.setSchools(SCHOOLS);
+    if (proOn) resultsSky.haloFn = pro.halo;
     c.addEventListener('click', (e) => {
       const r = c.getBoundingClientRect(), b = resultsSky.pick(e.clientX - r.left, e.clientY - r.top);
+      if (b && b.s.ghost) return pro.openPaywall();
       if (b) { resultsSky.selected = b; openSheet(b.id); }
     });
     new IntersectionObserver(([en]) => (resultsSky.visible = en.isIntersecting)).observe(c);
@@ -727,14 +745,20 @@ function Results() {
     wireNav(el); reveal(el);
     [300, 900, 1800].forEach((ms) => setTimeout(() => grit.wake(), ms));
     if (S.friend) buildCompare();
+    accounts.wireAccountButton(el);
+    accounts.onResults({ first: true });
+    if (proOn) pro.refresh();
   }, 0);
   return el;
 }
-function refreshResults(snap) {
+function refreshResults(snap, quiet = false) {
   if (S.screen !== 'results') return;
   rescore();
   if (resultsSky) {
-    resultsSky.setFits(S.kept.map((id) => ({ id, fit: resultOf(id).fit })), { only: S.kept, focus: 99, labels: 99 });
+    const extras = proOn ? pro.skyExtras().filter((x) => x.s && !S.kept.includes(x.s.id)) : [];
+    if (extras.length) resultsSky.setSchools(extras.map((x) => x.s));
+    const known = S.kept.filter((id) => byId.has(id));
+    resultsSky.setFits([...known.map((id) => ({ id, fit: resultOf(id).fit })), ...extras.map((x) => ({ id: x.s.id, fit: x.fit }))], { only: [...known, ...extras.map((x) => x.s.id)], focus: 99, labels: 99 });
     if (snap) { resultsSky.snap(); for (const b of resultsSky.bodies.values()) if (S.kept.includes(b.id)) { b.r = 1.3; b.mass = 0; b.alpha = 1; } }
     const empty = $('#empty-sky');
     empty.hidden = S.kept.length > 0;
@@ -742,37 +766,44 @@ function refreshResults(snap) {
   }
   renderList(); renderMoney(); renderDates(); renderShare();
   if (S.friend) renderCompare();
+  const hs = $('#hidden-slot'); if (hs && proOn) hs.innerHTML = pro.hiddenLine();
+  if (!snap && !quiet) accounts.markDirty();
 }
-function keptResults() { return S.kept.map((id) => ({ s: byId.get(id), r: resultOf(id) })).sort((a, b) => b.r.fit - a.r.fit); }
+function keptResults() { return S.kept.filter((id) => byId.has(id)).map((id) => ({ s: byId.get(id), r: resultOf(id) })).sort((a, b) => b.r.fit - a.r.fit); }
 function suggest(filter) { return scored.find((x) => !S.kept.includes(x.s.id) && filter(x)); }
 function addBtn(x, label) { return x ? `<button class="btn ghost small" data-open="${x.s.id}">${label || 'See ' + esc(x.s.n)}</button>` : ''; }
 
 function renderList() {
   const body = $('#list-body'); if (!body) return;
   const ks = keptResults();
-  const n = { reach: 0, target: 0, likely: 0 }; ks.forEach((x) => n[x.r.chance.cat]++);
+  // With Pro on, categories come from the server (Pro) or stay hidden (free).
+  const catOf = (x) => (proOn ? pro.detail(x.s.id)?.chance?.category : x.r.chance.cat);
+  const locked = proOn && !pro.isPro();
+  const n = { reach: 0, target: 0, likely: 0 }; ks.forEach((x) => { const c = catOf(x); if (c) n[c]++; });
   const tot = ks.length || 1;
   const warns = [];
-  if (!n.likely) { const sg = suggest((x) => x.r.chance.cat === 'likely' && x.r.fit >= 55); warns.push({ t: 'No likely schools yet. Every list needs one or two you’re very likely to get into.', a: addBtn(sg, `Try ${sg ? esc(sg.s.n) : ''}, ${sg ? sg.r.fit : ''}% fit`) }); }
-  if (ks.length && n.reach / tot > 0.6) warns.push({ t: `Reach-heavy: ${n.reach} of ${ks.length} are reaches. Balance them with targets.` });
-  if (ks.length && !n.target) { const sg = suggest((x) => x.r.chance.cat === 'target' && x.r.fit >= 55); warns.push({ t: 'No targets yet. These are the schools where your scores sit right in the middle.', a: addBtn(sg, sg ? `Try ${esc(sg.s.n)}, ${sg.r.fit}% fit` : '') }); }
+  if (!locked && !n.likely) { const sg = suggest((x) => catOf(x) === 'likely' && x.r.fit >= 55); warns.push({ t: 'No likely schools yet. Every list needs one or two you’re very likely to get into.', a: addBtn(sg, `Try ${sg ? esc(sg.s.n) : ''}, ${sg ? sg.r.fit : ''}% fit`) }); }
+  if (!locked && ks.length && n.reach / tot > 0.6) warns.push({ t: `Reach-heavy: ${n.reach} of ${ks.length} are reaches. Balance them with targets.` });
+  if (!locked && ks.length && !n.target) { const sg = suggest((x) => catOf(x) === 'target' && x.r.fit >= 55); warns.push({ t: 'No targets yet. These are the schools where your scores sit right in the middle.', a: addBtn(sg, sg ? `Try ${esc(sg.s.n)}, ${sg.r.fit}% fit` : '') }); }
   if (ks.length > 0 && ks.length < 5) warns.push({ t: `${ks.length} school${ks.length > 1 ? 's' : ''} so far. Most students apply to 6 to 10.` });
   if (ks.length > 14) warns.push({ t: `${ks.length} schools is a lot of essays. Most students apply to 6 to 10.` });
   const ed = ks.filter((x) => E.deadlinesOf(x.s).some((d) => d.binding));
   if (ed.length > 1) warns.push({ t: 'Early Decision is binding: you can apply ED to only one school.' });
+  const balance = (counts, label) => `<div class="balance" role="img" aria-label="${label}">
+      ${['reach', 'target', 'likely'].map((c, i) => `<div class="bal ${c}" style="--f:${Math.max(counts[c], 0.35)};--i:${i}"><span class="bal-n" data-count="${counts[c]}">${counts[c]}</span><span class="bal-l">${CHANCE[c]}</span></div>`).join('')}
+    </div>`;
   body.innerHTML = `
-    <div class="balance" role="img" aria-label="${n.reach} reach, ${n.target} target, ${n.likely} likely">
-      ${['reach', 'target', 'likely'].map((c, i) => `<div class="bal ${c}" style="--f:${Math.max(n[c], 0.35)};--i:${i}"><span class="bal-n" data-count="${n[c]}">${n[c]}</span><span class="bal-l">${CHANCE[c]}</span></div>`).join('')}
-    </div>
-    <p class="hint" data-rv>Aim for 2–3 of each.</p>
+    ${locked ? pro.teaser(balance({ reach: 2, target: 3, likely: 1 }, ''), 'See your reach, target and likely balance') : balance(n, `${n.reach} reach, ${n.target} target, ${n.likely} likely`)}
+    <p class="hint" data-rv>Aim for 2–3 of each.${proOn ? ` <button class="link-btn" id="build-list">${locked ? 'Build a balanced list with Pro' : 'Build a balanced list'}</button>` : ''}</p>
     ${warns.map((w) => `<div class="warn" data-rv>${ICON.warn}<div><p>${w.t}</p>${w.a || ''}</div></div>`).join('')}
-    ${!warns.length && ks.length ? `<div class="warn ok" data-rv>${ICON.ok}<p>Nicely balanced.</p></div>` : ''}
+    ${!warns.length && ks.length && !locked ? `<div class="warn ok" data-rv>${ICON.ok}<p>Nicely balanced.</p></div>` : ''}
     <ul class="rows">${ks.map((x, i) => `<li data-rv style="--i:${i}"><button class="row" data-open="${x.s.id}"><span class="row-p" data-portrait="${x.s.id}"></span>
-      <span class="row-main"><span class="row-name">${esc(x.s.n)}</span><span class="row-sub">${esc(x.s.c)}, ${x.s.s} · est. ${money(x.r.cost.est)}/yr</span></span>
-      <span class="row-fit mono">${x.r.fit}%</span>${pill(x.r.chance.cat)}${ICON.chev}</button></li>`).join('')}</ul>
+      <span class="row-main"><span class="row-name">${esc(x.s.n)}</span><span class="row-sub">${esc(x.s.c)}, ${x.s.s} · ${proOn && pro.netFor(x.s.id) == null ? 'avg.' : 'est.'} ${money(estOf(x))}/yr</span></span>
+      <span class="row-fit mono">${x.r.fit}%</span>${chancePill(x.s.id, x.r.chance.cat)}${ICON.chev}</button></li>`).join('')}</ul>
     <div class="search"><label class="fieldline" for="find">Add any school</label><input id="find" class="textin" type="search" placeholder="Search ${SCHOOLS.length} schools" autocomplete="off"><ul class="find-results" id="find-results"></ul></div>`;
   $$('[data-portrait]', body).forEach((p) => p.appendChild(schoolPortrait(byId.get(+p.dataset.portrait), 30, 220)));
   reveal(body);
+  $('#build-list', body)?.addEventListener('click', () => pro.openBuilder());
   const find = $('#find', body), out = $('#find-results', body);
   find.addEventListener('input', () => {
     const q = find.value.trim().toLowerCase();
@@ -781,14 +812,18 @@ function renderList() {
   });
 }
 
+// Yearly cost to show for a kept school: Pro's server estimate at your income when available.
+const estOf = (x) => (proOn ? pro.netFor(x.s.id) ?? x.r.cost.est : x.r.cost.est);
 function renderMoney() {
   const body = $('#money-body'); if (!body) return;
   const P = S.profile, ks = keptResults();
+  const incomeLocked = proOn && !pro.isPro();
   const max = Math.max(P.budget || 0, ...ks.map((x) => x.r.cost.sticker), 1);
-  const within = P.budget != null ? ks.filter((x) => x.r.cost.est <= P.budget) : [];
+  const within = P.budget != null ? ks.filter((x) => estOf(x) <= P.budget) : [];
   body.innerHTML = `
     <div class="money-ctrls">
-      <div class="field"><span class="fieldline" id="l-inc">Family income <span class="dim">optional</span></span>
+      <div class="field${incomeLocked ? ' locked-field' : ''}"><span class="fieldline" id="l-inc">Family income <span class="dim">${incomeLocked ? 'Pro' : 'optional'}</span></span>
+        ${incomeLocked ? `<button class="btn ghost small unlock-inline" data-unlock>${ICON.lock}<span>See what you’d pay at your income</span></button></div>` : ''}${incomeLocked ? '<div hidden>' : ''}
         <div class="chips" role="radiogroup" aria-labelledby="l-inc">${INCOMES.map((i) => `<button class="chip" role="radio" aria-checked="${S.income === i.v}" data-inc="${i.v}"><i class="pour" aria-hidden="true"></i><span>${i.l}</span></button>`).join('')}<button class="chip" role="radio" aria-checked="${S.income == null}" data-inc=""><i class="pour" aria-hidden="true"></i><span>Not sure</span></button></div></div>
       <div class="field"><div class="fieldline"><label for="m-budget">Yearly budget</label><output class="mono" id="m-out">${P.budget != null ? budgetText(P.budget) : 'Not set'}</output></div>
         <input id="m-budget" type="range" min="0" max="90000" step="1000" value="${P.budget ?? 30000}" class="${P.budget == null ? 'unset' : ''}"></div>
@@ -797,9 +832,9 @@ function renderMoney() {
     <div class="chart" style="--budget:${P.budget != null ? (P.budget / max) * 100 : -10}%">
       ${P.budget != null ? `<div class="budget-line"><span class="mono">Budget</span></div>` : ''}
       ${ks.map((x, i) => `<button class="crow" style="--i:${i}" data-open="${x.s.id}">
-        <span class="crow-top"><span class="crow-name">${esc(x.s.n)}</span><span class="mono ${P.budget != null && x.r.cost.est > P.budget ? 'over' : ''}">${money(x.r.cost.est)}</span></span>
-        <span class="cbar"><i class="sticker" style="--w:${(x.r.cost.sticker / max) * 100}%"></i><i class="est" style="--w:${(x.r.cost.est / max) * 100}%"></i></span></button>`).join('')}
-      <div class="legend mono"><span><i class="est"></i>Est. for you</span><span><i class="sticker"></i>Sticker price</span></div>
+        <span class="crow-top"><span class="crow-name">${esc(x.s.n)}</span><span class="mono ${P.budget != null && estOf(x) > P.budget ? 'over' : ''}">${money(estOf(x))}</span></span>
+        <span class="cbar"><i class="sticker" style="--w:${(x.r.cost.sticker / max) * 100}%"></i><i class="est" style="--w:${(estOf(x) / max) * 100}%"></i></span></button>`).join('')}
+      <div class="legend mono"><span><i class="est"></i>${incomeLocked ? 'Avg. after grants' : 'Est. for you'}</span><span><i class="sticker"></i>Sticker price</span></div>
     </div>
     <p class="fine">Based on what students actually paid after grants. Confirm with each school’s net price calculator.</p>`;
   $$('[data-inc]', body).forEach((b) => b.addEventListener('click', () => { S.income = b.dataset.inc === '' ? null : +b.dataset.inc; refreshResults(); }));
@@ -847,9 +882,10 @@ const SITE = 'findyoursky.com';
 const siteLabel = () => (/^(localhost|127\.|\[::1\]|0\.0\.0\.0)/.test(location.hostname) || location.protocol === 'file:' ? SITE : location.host);
 
 // ---- Share card: one story-sized frame of your sky, drawn in the browser ----
-async function makeShareCard() {
+// square: a 1080×1080 post instead of the 1080×1920 story; same sky, no caption list.
+async function makeShareCard(square = false) {
   if (document.fonts) await document.fonts.ready;
-  const W = 1080, H = 1920, c = document.createElement('canvas'); c.width = W; c.height = H;
+  const W = 1080, H = square ? 1080 : 1920, c = document.createElement('canvas'); c.width = W; c.height = H;
   const g = c.getContext('2d'), name = S.profile.name.trim(), ks = keptResults();
   const bg = g.createRadialGradient(W / 2, -120, 0, W / 2, -120, H * 1.1);
   bg.addColorStop(0, '#2e3137'); bg.addColorStop(0.42, '#17191c'); bg.addColorStop(1, '#0b0c0e');
@@ -860,14 +896,14 @@ async function makeShareCard() {
   const metal = (x0, x1) => { const m = g.createLinearGradient(x0, 0, x1, 0); m.addColorStop(0, '#9aa0a8'); m.addColorStop(0.3, '#f7f8fa'); m.addColorStop(0.5, '#b4b9c1'); m.addColorStop(0.68, '#ffffff'); m.addColorStop(1, '#9196a0'); return m; };
   g.textBaseline = 'alphabetic';
   g.font = '500 28px "Geist Mono", monospace'; if ('letterSpacing' in g) g.letterSpacing = '8px';
-  g.fillStyle = 'rgba(184,188,196,0.9)'; g.fillText('YOUR SKY', 84, 140);
+  g.fillStyle = 'rgba(184,188,196,0.9)'; g.fillText('YOUR SKY', 84, square ? 104 : 140);
   if ('letterSpacing' in g) g.letterSpacing = '0px';
-  g.font = '400 118px "Instrument Serif", Georgia, serif';
+  g.font = `400 ${square ? 96 : 118}px "Instrument Serif", Georgia, serif`;
   const title = name ? `${name}’s sky` : 'My sky';
-  g.fillStyle = metal(84, 84 + g.measureText(title).width); g.fillText(title, 80, 262);
+  g.fillStyle = metal(84, 84 + g.measureText(title).width); g.fillText(title, 80, square ? 206 : 262);
 
   // The sky: engraved orbits, then schools at their fit distances, your planet at the center.
-  const cx = W / 2, cy = 880, RX = 470, tilt = 0.74;
+  const cx = W / 2, cy = square ? 625 : 880, RX = square ? 380 : 470, tilt = 0.74;
   for (const f of [0.3, 0.55, 0.78, 1]) {
     g.lineWidth = 2;
     g.strokeStyle = 'rgba(0,0,0,0.35)'; g.beginPath(); g.ellipse(cx, cy + 2, RX * f, RX * f * tilt, 0, 0, Math.PI * 2); g.stroke();
@@ -878,7 +914,7 @@ async function makeShareCard() {
   const bodies = ks.map((x, i) => {
     const norm = (hi - x.r.fit) / span, rank = ks.length > 1 ? i / (ks.length - 1) : 0, rr = 0.32 + (norm * 0.55 + rank * 0.45) * 0.66;
     const ang = i * 2.39996 + (hashStr(String(x.s.id)) % 100) / 60, sizeF = Math.max(0, Math.min(1, (Math.log10(x.s.size || 2000) - 3) / 1.6));
-    return { x, px: cx + Math.cos(ang) * RX * rr, py: cy + Math.sin(ang) * RX * rr * tilt, sz: 58 + sizeF * 36, depth: Math.sin(ang) };
+    return { x, px: cx + Math.cos(ang) * RX * rr, py: cy + Math.sin(ang) * RX * rr * tilt, sz: (58 + sizeF * 36) * (square ? 0.85 : 1), depth: Math.sin(ang) };
   });
   const drawBody = (b) => {
     if (shared.has(b.x.s.id)) { g.strokeStyle = 'rgba(240,242,246,0.6)'; g.lineWidth = 2; g.beginPath(); g.arc(b.px, b.py, b.sz * 0.62, 0, Math.PI * 2); g.stroke(); }
@@ -892,7 +928,7 @@ async function makeShareCard() {
   g.fillStyle = glow; g.fillRect(cx - 360, cy - 360, 720, 720);
   const keepSun = you.p.sunness, keepRing = you.p.ring, keepHalo = you.p.halo;
   you.p.sunness = 0.12; you.p.ring = keepRing * 0.55; you.p.halo = keepHalo * 0.4;
-  you.draw(new SKY.Painter(), g, cx, cy, 132, 2);
+  you.draw(new SKY.Painter(), g, cx, cy, square ? 110 : 132, 2);
   you.p.sunness = keepSun; you.p.ring = keepRing; you.p.halo = keepHalo;
   bodies.filter((b) => b.depth >= 0).forEach(drawBody);
   // Labels under each planet, nudged to avoid collisions.
@@ -907,7 +943,7 @@ async function makeShareCard() {
     for (let k = 1; k <= 6; k++) { const dd = off + 40 * k, lx = b.px + (ux / ul) * dd, ly = b.py + (uy / ul) * dd; spots.push([ux > 0 ? lx : lx - tw, ly, true]); }
     for (const [x, y, lead] of spots) {
       const r = [x - 8, y - 17, tw + 16, 34];
-      if (r[0] < 30 || r[0] + r[2] > W - 30 || r[1] < 300 || r[1] + r[3] > 1360 || placed.some((p) => r[0] < p[0] + p[2] && r[0] + r[2] > p[0] && r[1] < p[1] + p[3] && r[1] + r[3] > p[1])) continue;
+      if (r[0] < 30 || r[0] + r[2] > W - 30 || r[1] < (square ? 250 : 300) || r[1] + r[3] > (square ? H - 110 : 1360) || placed.some((p) => r[0] < p[0] + p[2] && r[0] + r[2] > p[0] && r[1] < p[1] + p[3] && r[1] + r[3] > p[1])) continue;
       placed.push(r);
       if (lead) { g.strokeStyle = 'rgba(220,225,235,0.35)'; g.lineWidth = 1.5; g.beginPath(); g.moveTo(b.px + (ux / ul) * b.sz * 0.5, b.py + (uy / ul) * b.sz * 0.5); g.lineTo(ux > 0 ? r[0] : r[0] + r[2], y); g.stroke(); }
       g.fillStyle = 'rgba(12,13,16,0.62)'; g.fillRect(r[0], r[1], r[2], r[3]);
@@ -916,8 +952,9 @@ async function makeShareCard() {
     }
   }
 
-  // Caption: the three closest orbits.
+  // Caption: the three closest orbits (story only).
   let y = 1400;
+  if (!square) {
   g.textBaseline = 'alphabetic'; g.font = '500 24px "Geist Mono", monospace'; if ('letterSpacing' in g) g.letterSpacing = '6px';
   g.fillStyle = 'rgba(142,147,156,1)'; g.fillText('CLOSEST ORBITS', 84, y);
   if ('letterSpacing' in g) g.letterSpacing = '0px';
@@ -929,17 +966,21 @@ async function makeShareCard() {
     g.font = '500 32px "Geist Mono", monospace'; g.fillStyle = '#eef0f3'; const f = `${x.r.fit}%`; g.fillText(f, W - 84 - g.measureText(f).width, y - 14);
     y += 22;
   }
+  }
   g.font = '500 26px "Geist Mono", monospace'; g.fillStyle = 'rgba(160,165,174,0.9)';
-  const foot = `${siteLabel()}  ·  build yours`; g.fillText(foot, (W - g.measureText(foot).width) / 2, H - 92);
+  const foot = `${siteLabel()}  ·  build yours`; g.fillText(foot, (W - g.measureText(foot).width) / 2, H - (square ? 56 : 92));
   return c;
 }
 
-let shareBlob = null, shareURL = null, shareJob = 0;
+let shareBlob = null, shareURL = null, shareJob = 0, shareSquare = false;
 function renderShare() {
   const body = $('#share-body'); if (!body) return;
   const ks = keptResults(), name = S.profile.name.trim();
   body.innerHTML = `
-    <figure class="share-preview" data-rv><img id="share-img" alt="${esc(name ? name + '’s' : 'My')} sky: ${ks.length} schools${ks[0] ? ', closest ' + ks.slice(0, 3).map((x) => esc(x.s.n)).join(', ') : ''}"></figure>
+    <div class="seg share-fmt" role="radiogroup" aria-label="Image size" data-rv>
+      <button role="radio" aria-checked="${!shareSquare}" data-fmt="story">Story</button><button role="radio" aria-checked="${shareSquare}" data-fmt="square">Square</button>
+    </div>
+    <figure class="share-preview${shareSquare ? ' square' : ''}" data-rv><img id="share-img" alt=""${esc(name ? name + '’s' : 'My')} sky: ${ks.length} schools${ks[0] ? ', closest ' + ks.slice(0, 3).map((x) => esc(x.s.n)).join(', ') : ''}"></figure>
     <div class="share-btns" data-rv style="--i:2">
       <button class="btn chrome" id="sh-primary" disabled>Save image</button>
       <button class="btn ghost" id="sh-copy">Copy link</button>
@@ -949,24 +990,28 @@ function renderShare() {
     <button class="btn text small" id="restart">Start over</button>`;
   reveal(body);
   const job = ++shareJob, img = $('#share-img', body), primary = $('#sh-primary', body), save = $('#sh-save', body);
-  const download = () => { if (!shareURL) return; const a = document.createElement('a'); a.href = shareURL; a.download = 'your-sky.png'; document.body.appendChild(a); a.click(); a.remove(); };
+  const file = () => (shareSquare ? 'your-sky-square.png' : 'your-sky.png');
+  const download = () => { if (!shareURL) return; track('share_clicked', { kind: 'save' }); const a = document.createElement('a'); a.href = shareURL; a.download = file(); document.body.appendChild(a); a.click(); a.remove(); };
+  $$('[data-fmt]', body).forEach((b) => b.addEventListener('click', () => { const sq = b.dataset.fmt === 'square'; if (sq !== shareSquare) { shareSquare = sq; renderShare(); } }));
+  piles(body);
   setTimeout(async () => {
-    const c = await makeShareCard();
+    const c = await makeShareCard(shareSquare);
     if (job !== shareJob) return;
     c.toBlob((b) => {
       if (!b || job !== shareJob) return;
       shareBlob = b; if (shareURL) URL.revokeObjectURL(shareURL); shareURL = URL.createObjectURL(b); img.src = shareURL;
-      const file = new File([b], 'your-sky.png', { type: 'image/png' });
-      const canShareFile = !!(navigator.canShare && navigator.canShare({ files: [file] }));
+      const f = new File([b], file(), { type: 'image/png' });
+      const canShareFile = !!(navigator.canShare && navigator.canShare({ files: [f] }));
       primary.disabled = false;
       if (canShareFile) {
         primary.textContent = 'Share'; save.hidden = false;
-        primary.onclick = () => navigator.share({ files: [file], title: 'My sky', text: `Here’s my college sky. Build yours and see how we overlap: ${shareLink()}` }).catch(() => {});
+        primary.onclick = () => { track('share_clicked', { kind: 'share' }); navigator.share({ files: [f], title: 'My sky', text: `Here’s my college sky. Build yours and see how we overlap: ${shareLink()}` }).catch(() => {}); };
       } else primary.onclick = download;
     }, 'image/png');
   }, 120);
   save.addEventListener('click', download);
   $('#sh-copy', body).addEventListener('click', async () => {
+    track('share_clicked', { kind: 'link' });
     try { await navigator.clipboard.writeText(shareLink()); toast('Link copied'); }
     catch (e) { prompt('Copy your link', shareLink()); }
   });
@@ -1014,7 +1059,7 @@ function renderCompare(snap) {
     ${cp.same.length ? `<h3 class="r-sub">You both want</h3><p class="tags">${cp.same.map((t) => `<span>${esc(t)}</span>`).join('')}</p>` : ''}
     ${cp.diff.length ? `<h3 class="r-sub">Where you differ</h3><p class="tags dim">${cp.diff.map((t) => `<span>${esc(t)}</span>`).join('')}</p>` : ''}
     <h3 class="r-sub">Only on ${esc(f.n || 'their')}${f.n ? '’s' : ''} list</h3>
-    <ul class="rows">${names(f.k.filter((id) => !S.kept.includes(id))).map((s) => `<li><button class="row slim" data-open="${s.id}"><span class="row-main"><span class="row-name">${esc(s.n)}</span><span class="row-sub">${resultOf(s.id).fit}% fit for you</span></span>${pill(resultOf(s.id).chance.cat)}${ICON.chev}</button></li>`).join('') || '<li class="hint">Nothing. You kept everything they did.</li>'}</ul>`;
+    <ul class="rows">${names(f.k.filter((id) => !S.kept.includes(id))).map((s) => `<li><button class="row slim" data-open="${s.id}"><span class="row-main"><span class="row-name">${esc(s.n)}</span><span class="row-sub">${resultOf(s.id).fit}% fit for you</span></span>${chancePill(s.id, resultOf(s.id).chance.cat)}${ICON.chev}</button></li>`).join('') || '<li class="hint">Nothing. You kept everything they did.</li>'}</ul>`;
 }
 
 // Results animations are tied to scroll position (see ScrollSand), so they rewind as you scroll back up.
@@ -1069,16 +1114,22 @@ function wireNav(el) {
 const sheet = $('#sheet'), sheetBody = $('#sheet-body'), backdrop = $('#backdrop');
 let lastFocus = null;
 const TEST = { 1: 'Required', 2: 'Recommended', 3: 'Not considered', 5: 'Test-optional' };
-function openSheet(id) {
-  const s = byId.get(id); if (!s) return;
-  const r = resultOf(id), ex = E.explain(s, r), c = r.cost, kept = S.kept.includes(id);
+function satBarOf(s) {
   const sat = E.satOf(S.profile);
+  if (!s.sat) return '<p class="hint">No SAT range reported.</p>';
+  const L = 800, R = 1600, a = ((s.sat[0] - L) / (R - L)) * 100, b = ((s.sat[1] - L) / (R - L)) * 100;
+  const m = sat ? ((Math.max(L, Math.min(R, sat)) - L) / (R - L)) * 100 : null;
+  return `<div class="range"><i class="band" style="left:${a}%;width:${b - a}%"></i>${m != null ? `<i class="you" style="left:${m}%"><span class="mono">You ${sat}</span></i>` : ''}</div><div class="scale mono"><span>800</span><span>Middle 50%: ${s.sat[0]}–${s.sat[1]}</span><span>1600</span></div>`;
+}
+function openSheet(id) {
+  if (id < 0) return pro.openPaywall();
+  const s = byId.get(id); if (!s) return;
+  if (proOn) pro.ensureDetail(id);
+  const r = resultOf(id), ex = E.explain(s, r), c = { ...r.cost }, kept = S.kept.includes(id);
   const dls = E.deadlinesOf(s);
-  const satBar = s.sat ? (() => {
-    const L = 800, R = 1600, a = ((s.sat[0] - L) / (R - L)) * 100, b = ((s.sat[1] - L) / (R - L)) * 100;
-    const m = sat ? ((Math.max(L, Math.min(R, sat)) - L) / (R - L)) * 100 : null;
-    return `<div class="range"><i class="band" style="left:${a}%;width:${b - a}%"></i>${m != null ? `<i class="you" style="left:${m}%"><span class="mono">You ${sat}</span></i>` : ''}</div><div class="scale mono"><span>800</span><span>Middle 50%: ${s.sat[0]}–${s.sat[1]}</span><span>1600</span></div>`;
-  })() : '<p class="hint">No SAT range reported.</p>';
+  const satBar = satBarOf(s);
+  const pc = proOn ? pro.sheetCost(s, c) : null;
+  if (pc) { c.est = pc.est; c.basis = pc.basis; }
   const calc = s.calc ? (s.calc.startsWith('http') ? s.calc : 'https://' + s.calc) : null;
   sheetBody.innerHTML = `
     <header class="sh-head">
@@ -1086,12 +1137,12 @@ function openSheet(id) {
       <div class="sh-title"><h2 id="sheet-title">${esc(s.n)}</h2><p class="hint">${esc(s.c)}, ${s.s} · ${s.pub ? 'Public' : 'Private'} · ${fmtInt(s.size)} undergrads</p></div>
       <div class="sh-fit"><span class="metal">${r.fit}</span><small>% fit</small></div>
     </header>
-    <div class="sh-row">${pill(r.chance.cat)}${s.hbcu ? '<span class="tag">HBCU</span>' : ''}${s.wo ? '<span class="tag">Women’s college</span>' : ''}${s.note ? `<span class="tag">${esc(s.note)}</span>` : ''}</div>
+    <div class="sh-row">${chancePill(id, r.chance.cat)}${s.hidden ? '<span class="tag">Hidden match</span>' : ''}${s.hbcu ? '<span class="tag">HBCU</span>' : ''}${s.wo ? '<span class="tag">Women’s college</span>' : ''}${s.note ? `<span class="tag">${esc(s.note)}</span>` : ''}</div>
     <section><h3>Why it fits you</h3><ul class="why">${ex.why.map((w) => `<li>${esc(w)}</li>`).join('') || '<li>Answer more questions to see why.</li>'}</ul>
       <p class="heads">${ICON.warn}<span>${esc(ex.heads)}</span></p></section>
     <section><h3>Fit breakdown</h3><ul class="parts">${r.parts.sort((a, b) => b.w - a.w).map((p) => `<li><span>${esc(p.label)}</span><span class="pbar"><i style="width:${Math.round(p.v * 100)}%"></i></span><span class="mono">${Math.round(p.v * 100)}</span></li>`).join('')}</ul></section>
-    <section><h3>Your chances</h3><p>${CHANCE[r.chance.cat]}: ${esc(r.chance.basis)}.</p>
-      <dl class="facts"><div><dt>Admit rate</dt><dd>${pct(s.adm)}</dd></div><div><dt>Testing</dt><dd>${TEST[s.test] || '—'}</dd></div><div><dt>ACT range</dt><dd>${s.act ? s.act.join('–') : '—'}</dd></div></dl>${satBar}</section>
+    ${pro.sheetChances(s, `<section><h3>Your chances</h3><p>${CHANCE[r.chance.cat]}: ${esc(r.chance.basis)}.</p>
+      <dl class="facts"><div><dt>Admit rate</dt><dd>${pct(s.adm)}</dd></div><div><dt>Testing</dt><dd>${TEST[s.test] || '—'}</dd></div><div><dt>ACT range</dt><dd>${s.act ? s.act.join('–') : '—'}</dd></div></dl>${satBar}</section>`)}
     <section><h3>Cost per year</h3>
       <table class="ctable"><tbody>
         <tr><td>Tuition${s.pub ? (c.inState ? ' (in-state)' : ' (out-of-state)') : ''}</td><td>${money(c.tuition)}</td></tr>
@@ -1099,14 +1150,15 @@ function openSheet(id) {
         <tr><td>Books and supplies</td><td>${money(c.books)}</td></tr>
         <tr><td>Other costs</td><td>${money(c.other)}</td></tr>
         <tr class="total"><td>Sticker price</td><td>${money(c.sticker)}</td></tr>
-        <tr class="you"><td>Estimated for you<small>${esc(c.basis)}</small></td><td class="metal">${money(c.est)}</td></tr>
+        <tr class="you"><td>${pc?.locked ? 'Average after grants' : 'Estimated for you'}<small>${esc(c.basis)}</small></td><td class="metal">${money(c.est)}</td></tr>
       </tbody></table>
       ${c.note ? `<p class="hint">${esc(c.note)}.</p>` : ''}
-      ${s.nbi && s.nbi.some((v) => v != null) ? `<p class="fieldline">Average net price by family income</p><div class="nbi">${INCOMES.map((i) => `<div class="${S.income === i.v ? 'on' : ''}"><span class="mono">${i.l}</span><strong>${money(s.nbi[i.v])}</strong></div>`).join('')}</div>` : ''}
+      ${pc?.locked ? `<p class="fieldline">Net price by family income</p>${pro.teaser(`<div class="nbi">${INCOMES.map((i) => `<div><span class="mono">${i.l}</span><strong>$00.0k</strong></div>`).join('')}</div>`, 'See what you’d pay at your income')}`
+        : !proOn && s.nbi && s.nbi.some((v) => v != null) ? `<p class="fieldline">Average net price by family income</p><div class="nbi">${INCOMES.map((i) => `<div class="${S.income === i.v ? 'on' : ''}"><span class="mono">${i.l}</span><strong>${money(s.nbi[i.v])}</strong></div>`).join('')}</div>` : ''}
       ${calc ? `<a class="btn ghost small" href="${esc(calc)}" target="_blank" rel="noopener">Net price calculator</a>` : ''}</section>
     <section><h3>Deadlines</h3><ul class="dl">${dls.map((d) => `<li><span>${d.name}${d.binding ? ' <span class="dim">· binding</span>' : ''}</span><span class="mono">${d.date ? E.fmtDate(d.date) : 'Apply early'}</span></li>`).join('')}</ul><p class="fine">Typical dates; confirm on the school’s site.</p></section>
     <section><h3>Key facts</h3><dl class="facts">
-      <div><dt>Graduation rate</dt><dd>${pct(s.grad)}</dd></div><div><dt>Earnings at 10 yrs</dt><dd>${money(s.earn)}</dd></div>
+      <div><dt>Graduation rate</dt><dd>${pct(s.grad)}</dd></div><div><dt>Earnings at 10 yrs</dt><dd>${proOn ? pro.earningsCell(s) : money(s.earn)}</dd></div>
       <div><dt>Median debt</dt><dd>${money(s.debt)}</dd></div><div><dt>Students per prof</dt><dd>${s.sfr ?? '—'}</dd></div>
       <div><dt>Setting</dt><dd>${esc(E.LOCALE_WORDS[E.locGroup(s.loc)].replace(/^a /, ''))}</dd></div><div><dt>From home</dt><dd>${r.dist != null ? fmtInt(Math.round(r.dist / 10) * 10) + ' mi' : '—'}</dd></div>
     </dl>${s.url ? `<a class="link" href="${esc(s.url.startsWith('http') ? s.url : 'https://' + s.url)}" target="_blank" rel="noopener">${esc(s.url.replace(/^https?:\/\//, '').replace(/\/$/, ''))}</a>` : ''}</section>
@@ -1121,10 +1173,21 @@ function openSheet(id) {
     closeSheet(); refreshResults();
     if (S.screen === 'deck') renderStack();
   });
-  lastFocus = document.activeElement;
+  presentSheet();
+}
+function presentSheet() {
+  if (sheet.hidden) lastFocus = document.activeElement;
   sheet.hidden = false; backdrop.hidden = false;
   sheetBody.scrollTop = 0;
   requestAnimationFrame(() => { sheet.classList.add('open'); backdrop.classList.add('open'); $('#sheet-close').focus(); });
+}
+// Any other content in the same sheet (sign-in, paywall, builder…). mount(panel) fills it.
+function openPanel(html, mount, { label = '' } = {}) {
+  sheetBody.innerHTML = `<div class="panel">${html}</div>`;
+  sheet.classList.remove('has-acc'); sheet.style.setProperty('--acc', 'transparent');
+  sheet.setAttribute('aria-label', label);
+  if (mount) mount(sheetBody.firstElementChild);
+  presentSheet();
 }
 function closeSheet() {
   sheet.classList.remove('open'); backdrop.classList.remove('open');
@@ -1168,7 +1231,47 @@ $('#sky').addEventListener('click', (e) => {
   if (b) openSheet(b.id);
 });
 
-const SCREENS = { landing: Landing, profile: Profile, questions: Questions, deck: Deck, results: Results };
-if (!SCHOOLS.length) { app.innerHTML = '<section class="screen"><p class="lede" style="padding:24px">School data is missing. Run scripts/build_data.py to generate app/data.js.</p></section>'; return; }
-rescore();
-go('landing', { erode: false, focus: false });
+// ---- Accounts and Pro (both off unless configured; see env.js) ------------------------------------------
+// Puts a saved or stashed sky back into the app.
+function restore(rec) {
+  const f = S.friend;
+  S = fresh(); S.friend = f;
+  Object.assign(S.profile, rec.profile || {});
+  S.answers = rec.answers || {}; S.kept = (rec.kept || []).filter((id) => Number.isInteger(id) && id > 0); // hidden-match ids resolve once Pro data loads
+  S.passed = rec.passed || []; S.income = rec.income ?? null;
+  resultsSky = null; compareSky = null; friendPlanet = null;
+  if (S.profile.major) you.set('tint', METALS[E.majorOf(S.profile.major).fam].tint);
+  syncPlanet(); rescore();
+}
+function drawYou(canvas) {
+  if (!canvas) return;
+  const g = canvas.getContext('2d'), s = canvas.width;
+  g.clearRect(0, 0, s, s);
+  const keepSun = you.p.sunness; you.p.sunness = 0.15;
+  you.draw(new SKY.Painter(), g, s / 2, s / 2, s * 0.3, 1);
+  you.p.sunness = keepSun;
+}
+const ctx = {
+  S: () => S, $, $$, h, esc, toast, go, ICON, byId, resultOf, fx, motion, proOn, money, pct,
+  openPanel, closeSheet, drawYou, restore,
+  testLabel: (s) => TEST[s.test] || '—', satBar: satBarOf,
+  quietSky: () => { main.setFits([], { only: [] }); main.setView({ orbitAlpha: 0, sr: 0.01 }); main.sunText = ''; },
+  reset: () => { const f = S.friend; S = fresh(); S.friend = f; resultsSky = null; compareSky = null; friendPlanet = null; you.set('tint', [1, 1, 1]); syncPlanet(); go('landing'); },
+  compareWith: (friend) => { S.friend = { ...friend, k: friend.k.filter((id) => byId.has(id)) }; compareSky = null; friendPlanet = null; go('results'); setTimeout(() => $('#sec-compare')?.scrollIntoView({ behavior: motion.reduced ? 'auto' : 'smooth' }), 700); },
+  setKept: (ids) => { S.kept = ids.filter((id) => byId.has(id)); refreshResults(); },
+  openPaywall: () => pro.openPaywall(),
+  onProData: () => { if (S.screen === 'results') refreshResults(false, true); else if (S.screen === 'deck') { $$('.card').forEach((c) => c.remove()); renderStack(); } },
+};
+const accounts = createAccounts(ctx);
+const pro = createPro(ctx, accounts);
+accounts.onChange(() => { const b = $('#acct-btn'); if (b) { b.outerHTML = accounts.accountButton(); accounts.wireAccountButton(document); } });
+
+const SCREENS = { landing: Landing, profile: Profile, questions: Questions, deck: Deck, results: Results, account: () => accounts.Account() };
+if (!SCHOOLS.length) {
+  app.innerHTML = '<section class="screen"><p class="lede" style="padding:24px">School data is missing. Run scripts/build_data.py to generate app/src/data.json.</p></section>';
+} else {
+  rescore();
+  go('landing', { erode: false, focus: false });
+  pro.init();
+  accounts.init().then(() => { if (accounts.user() && S.kept.length && S.screen === 'landing') go('results'); }).catch(() => {});
+}

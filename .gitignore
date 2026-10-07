@@ -7,3 +7,4 @@ scripts/_build.log
 !.env.example
 node_modules/
 dist/
+!.env.mock

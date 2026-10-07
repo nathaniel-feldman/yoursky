@@ -483,6 +483,14 @@ class Sky {
         let lx = ocx - x, ly = (ocy - y) / C.tilt, lz = 0.45 * Math.hypot(lx, ly) / (RX * 0.5 + 1) + 0.25;
         const ln = Math.hypot(lx, ly, lz) || 1; lx /= ln; ly /= ln; lz /= ln;
         let hx = lx, hy = ly, hz = lz + 1; const hn = Math.hypot(hx, hy, hz); hx /= hn; hy /= hn; hz /= hn;
+        // Optional soft glow behind a planet (e.g. Pro's reach/target/likely), drawn under its grains.
+        const glow = this.haloFn && b.mass > 0.5 ? this.haloFn(b) : null;
+        if (glow) {
+          const gr = ctx.createRadialGradient(x, y, R * 0.7, x, y, R * 1.85);
+          gr.addColorStop(0, `rgba(${glow[0]},${glow[1]},${glow[2]},${(0.2 * b.alpha).toFixed(3)})`);
+          gr.addColorStop(1, `rgba(${glow[0]},${glow[1]},${glow[2]},0)`);
+          ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(x, y, R * 1.85, 0, TAU); ctx.fill();
+        }
         let pal = b === this.selected ? 'hi' : 'silver';
         if (pal === 'silver' && this.colorize && b.s.col) { pal = 'c' + b.id; if (!P.pals[pal]) P.palette(pal, tintFromHex(b.s.col), 1); }
         const disp = b.disturb * R * 2.2;
