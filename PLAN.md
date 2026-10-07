@@ -135,7 +135,7 @@ RLS and grants:
 - Numeric baseline: the pre-refactor engine at commit `2ee6dd0`. A Vitest parity test loads that file from git into a `vm` sandbox and compares `score`, `chanceOf`, `costOf`, the share encode/decode functions and `compat` against the new modules for fixed profiles and all 203 schools. Fit scores, categories and costs must match exactly.
 - Visual baseline: findyoursky.com, which keeps serving `main` until the merge. Compare it against the branch's Pages preview at 375px and on desktop.
 
-**Known bug found while making the baseline (to fix in Phase 3, not during the refactor):** `costOf` can return a negative estimate. Scorecard reports a negative net price for some low-income brackets, so a few cards show something like "$-2.0k". Clamp it to $0 and say "grants can exceed cost."
+**Known bug found while making the baseline (fixed 2026-10-07, commit "Never show a negative cost estimate"; the baseline was regenerated after checking that only the 9 formerly negative results changed and no fit score moved):** `costOf` can return a negative estimate. Scorecard reports a negative net price for some low-income brackets, so a few cards show something like "$-2.0k". Clamp it to $0 and say "grants can exceed cost."
 
 **Phase 0.5: Refactor (approved).**
 

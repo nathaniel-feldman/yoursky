@@ -64,7 +64,8 @@ function costOf(s, P, income) {
       note = s.rboff ? 'Off-campus housing instead of a dorm' : 'Off-campus housing instead of a dorm (estimated)';
     }
   }
-  return { est: Math.round(est), sticker: Math.round(sticker), inState, tuition, housing, books, other: Math.max(0, sticker - tuition - housing - books), basis, note };
+  // Scorecard reports negative net prices when grants exceed the cost; an estimate is never below $0.
+  return { est: Math.max(0, Math.round(est)), sticker: Math.round(sticker), inState, tuition, housing, books, other: Math.max(0, sticker - tuition - housing - books), basis, note };
 }
 
 // ---- Chances ----------------------------------------------------------
