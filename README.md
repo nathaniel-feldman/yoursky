@@ -22,7 +22,7 @@ Cloudflare Pages builds from GitHub:
 
 - Build command: `npm run build`
 - Build output directory: `dist`
-- Environment variable: `NODE_VERSION=22` (or newer)
+- Node version: read from `.node-version` (22)
 
 Every push to a branch gets its own preview URL; `main` deploys to findyoursky.com. Vite fingerprints asset filenames, so there's no manual cache busting. `app/public/_headers` sets security headers and caches `/assets/*` for a year.
 
