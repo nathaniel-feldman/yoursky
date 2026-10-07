@@ -1,6 +1,6 @@
 # Your Sky: accounts, Pro, chances, cost and friend skies
 
-Status: **Phase 0 (exploration and plan).** No feature code has been written. Waiting on answers to the open questions at the bottom.
+Status: **Phase 0.5 (refactor) is next.** Every recommendation in section 7 was approved on 2026-10-07. The refactor is waiting for Node.js to be installed.
 
 Branch: `feature/accounts-and-pro`. Nothing is committed to, pushed to or merged into `main`.
 
@@ -193,23 +193,17 @@ RLS and grants:
 
 ---
 
-## 7. Open questions
+## 7. Decisions (approved 2026-10-07)
 
-- **Q1. Free vs. Pro split.** Today chances, your-income cost and earnings are free on every card. Options:
-  - **(Recommended)** Keep raw public facts free: admit rate, SAT range, sticker price and average net price. Make the *personal* answers Pro: your reach/target/likely, your-income net price, earnings, and the balanced-list builder. The deck pill and the balance warnings would become teasers for free users.
-  - Or follow the brief literally and gate everything.
-  - Or keep today's features free and make Pro only the new things: hidden planets, the builder and outcomes.
-- **Q2. How "hidden" do hidden planets need to be?**
-  - **(Recommended)** Pro searches a bigger pool. The 203 curated schools stay public, and the server holds an expanded Pro-only pool (e.g. about 1,000 more schools from Scorecard). Hidden planets are your best matches from that pool. This is truly enforced and adds real value. The catch: those schools don't have hand-curated flags, so they score on Scorecard data alone.
-  - Or move all ranking to the server. That's truly hidden, but the quiz needs the network and loses its live motion offline.
-  - Or soft-hide within the public 203. That's easy, but a devtools user could work them out.
-- **Q3. Approve the Vite refactor** (section 3.1)? The alternative is staying build-free: load `supabase-js` from a CDN, keep config in a committed file (the anon key is public by design), and run tests with `node --test`. Sharing the engine with Deno would be clunkier.
-- **Q4. Keep the account-free `#s=` friend links** alongside account friends? I recommend yes; it's the zero-friction viral loop.
-- **Q5. Orders on account deletion.** I recommend keeping order rows with `user_id` set to null and `raw_event` stripped of the email, for refunds and tax records. Lemon Squeezy also keeps its own records.
-- **Q6. Academic inputs.** I recommend keeping them free to enter, as they are today, and saving them to the profile only when signed in and only if you opt in.
-- **Q7. Funnel events.** Options:
-  - **(Recommended)** A tiny Supabase `events` table: anonymous inserts, an allow-listed event list, no IDs.
-  - Cloudflare Zaraz `track()`.
-  - Or pageviews only through Cloudflare Web Analytics.
-- **Q8. Pricing check.** $4.99 minus Lemon Squeezy's fee (about 5% + 50¢; I'll verify in Phase 2) leaves about $4.24. A 50% affiliate commission (I'll confirm whether it's computed before or after fees) leaves you roughly $2.10 per referred sale. Is that intended?
-- **Q9. Free #1 reveal for anonymous users?** The server computes your #1 from your answers, so someone could change their answers to get other reveals. I recommend requiring sign-in for the free reveal.
+- **Q1. Free vs. Pro split.**
+  - Free: public facts (admit rate, SAT/ACT middle 50%, sticker price, average net price).
+  - Pro: personal answers (your reach/target/likely, your-income net price, earnings, the balanced-list builder).
+  - For free users, the deck pill and the balance warnings become teasers.
+- **Q2. Hidden planets.** Pro searches an expanded, server-only pool of Scorecard schools (about 1,000 beyond the 203 curated ones). Hidden planets are your best matches from that pool. Those schools score on Scorecard data alone because they have no curated flags.
+- **Q3. Vite refactor approved.** ES modules, Vitest, and a parity check against the baseline captured before the refactor.
+- **Q4.** Keep the account-free `#s=` friend links alongside account friends.
+- **Q5.** On account deletion, keep order rows with `user_id` set to null and personal data stripped from `raw_event`.
+- **Q6.** Academic inputs stay free to enter. They're saved to the profile only when signed in and opted in.
+- **Q7.** Funnel events go to a Supabase `events` table: anonymous inserts, allow-listed names, no IDs and no personal data.
+- **Q8.** Pricing is confirmed as intended: $4.99 one-time with a 50% affiliate commission. I'll verify the exact fee math in Phase 2.
+- **Q9.** The free #1 reveal requires sign-in.
