@@ -8,3 +8,4 @@ scripts/_build.log
 node_modules/
 dist/
 !.env.mock
+scripts/out/

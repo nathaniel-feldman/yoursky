@@ -1,6 +1,6 @@
 # Your Sky: accounts, Pro, chances, cost and friend skies
 
-Status: **Phase 0.5 (refactor) is done on this branch and waiting for review.** Phase 1 starts after your go-ahead and the Supabase setup. Every recommendation in section 7 was approved on 2026-10-07.
+Status: **Phases 0.5–4 are built and tested on this branch.** Phase 5 (group skies) is not started. Going live needs the account setup in section 11. Every recommendation in section 7 was approved on 2026-10-07.
 
 Branch: `feature/accounts-and-pro`. Nothing is committed to, pushed to or merged into `main`.
 
@@ -223,3 +223,73 @@ Original scope: Vite, ES modules, Vitest, unit tests for the current `score`/`ch
 - **Q7.** Funnel events go to a Supabase `events` table: anonymous inserts, allow-listed names, no IDs and no personal data.
 - **Q8.** Pricing is confirmed as intended: $4.99 one-time with a 50% affiliate commission. I'll verify the exact fee math in Phase 2.
 - **Q9.** The free #1 reveal requires sign-in.
+
+---
+
+## 8. What's built (2026-10-07)
+
+| Phase | Built | Verified by |
+|---|---|---|
+| 0.5 Refactor | Vite 8 and ES modules; Vitest | Parity test across 6 students × 203 schools; manual walkthrough of the production build |
+| 1 Accounts | Email-code sign-in (Google outside in-app browsers), 13+ checkbox (UI) plus a server rule (skies and friends need `confirmed_13_plus`), anonymous stash → saved on sign-in, saved skies, account page, account deletion, referral capture, draft privacy policy, About rewrite | RLS tests with 3+ accounts; client tests; mock walkthrough |
+| 2 Pro | Hidden planets, paywall, Lemon Squeezy overlay with `user_id` and creator code, webhook (signature, idempotency, refunds, variant check), Pro polling, Welcome moment, affiliate script | Webhook tests through the real database; gating tests; mock walkthrough |
+| 3 Chances and cost | `chances.js` heuristic, net price by income, sticker price, earnings, free #1 reveal, blurred teasers, chance halos, balanced-list builder, Scorecard → Supabase import, expanded pool | Heuristic unit tests; importer-to-schema test; live pool fetch (2 pages) |
+| 4 Friends and sharing | `/f/CODE` links, acceptance, unfriend, compare through accounts (existing renderer), square share card | RLS friend tests; mock walkthrough |
+| Analytics | Allow-listed anonymous `events` table; quiz_started, quiz_completed, save_prompt_shown/clicked, signed_up, unlock_clicked, purchase_completed (webhook), friend_link_opened, share_clicked | RLS test (insert-only, no reads) |
+
+Totals: 98 tests, all passing. `deno check` passes for all three functions. With no env set, the production build was walked through end to end and matches today's site: no account UI, no localStorage writes, no network calls beyond the page and fonts.
+
+## 9. Where I deviated from the brief, and why
+
+- **"Likely" instead of "Safety".** This matches the existing app's language, and nothing in public data makes admission safe.
+- **Supabase API keys.** I used the new publishable and secret keys (`sb_publishable_…`, `sb_secret_…`) instead of anon and service_role. Supabase is retiring the legacy keys at the end of 2026, and both are still accepted as a fallback.
+- **Sign-in tokens.** Edge Functions verify them against `SUPABASE_JWKS` (gateway `verify_jwt = false`), following current Supabase guidance for the new keys.
+- **Under-13 accounts.** The 13+ check blocks the sign-up UI and is enforced server-side for saving and friends. A Google sign-in can create an auth user before the checkbox is stored (Google can't carry the flag), but that user can't save anything or add friends until they confirm.
+- **The free #1 reveal** is your best match among all curated schools, shown as its own line, even if you didn't keep it. Revealing "the best of the ids you send" would let the client choose which school to unlock.
+- **Budget fit with Pro on.** The engine's budget part uses average net price when Pro is configured, because net price by income is stripped from the public data. Fit rankings can shift slightly for students who set a budget.
+
+## 10. Known limitations
+
+- **Free users can work out Pro answers.** The inputs are public federal data and the heuristic is documented, so a free user can compute a reach/target/likely estimate by hand, and admit rate and SAT ranges stay visible. What's truly server-only: hidden pool identities, net price by income, earnings, and the Pro heuristic's output.
+- **Possible slowness.** The `sky` function scores about 1,200 schools per call. That's fine at this size, but it was measured only locally.
+- **Event spam.** Anyone can insert into the anonymous `events` table. Rows are tiny and allow-listed, but they could be spammed; add a rate limit if it happens.
+- **Pool quality.** Pool schools have no curated flags (sports, Greek life, curriculum), so their fit leans on Scorecard data.
+- **Friend requests.** There are no notifications; requests show up on the account page.
+- **Contrast** wasn't measured with a tool. The new UI reuses existing text tokens.
+- **Lighthouse** wasn't run. The main bundle grew from 92 KB to 102 KB gzipped. Supabase (56 KB gzipped) and Lemon.js load only when needed.
+
+## 11. Launch checklist (things only a person can do)
+
+1. **Supabase.**
+   - Create the `yoursky-dev` and `yoursky` projects.
+   - Auth settings:
+     - Site URL `https://findyoursky.com`.
+     - Redirect URLs `http://localhost:5173/**` and `https://*.yoursky.pages.dev/**` (use your actual Pages subdomain).
+     - Email templates: paste `supabase/templates/magic_link.html` into both "Magic Link" and "Confirm signup".
+   - Google provider (optional): create a Google Cloud OAuth client with Supabase's callback URL.
+2. **Deploy the backend.**
+   - From the repo: `npx supabase link`, then `npx supabase db push`, then `npx supabase functions deploy lemon-webhook sky account-delete`.
+   - Set secrets: `LEMON_WEBHOOK_SECRET`, `LEMON_VARIANT_ID`.
+3. **Data.**
+   - Put `SCORECARD_API_KEY`, `SUPABASE_URL` and `SUPABASE_SECRET_KEY` in your local `.env`.
+   - Run `build_data.py --pool 1000`, then `import_supabase.py`.
+   - Spot-check 3 schools in the `schools` table against collegescorecard.ed.gov.
+4. **Lemon Squeezy (a parent, 18+).**
+   - Create the store and the $4.99 one-time product.
+   - Turn on affiliates at 50%, with the referral URL set to findyoursky.com.
+   - Create per-creator discount codes.
+   - Add the webhook (`…/functions/v1/lemon-webhook`, events `order_created` and `order_refunded`), and copy the signing secret and variant id.
+5. **Cloudflare Pages.**
+   - Build settings: `npm run build`, output `dist`.
+   - Add `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `VITE_LEMON_CHECKOUT_URL` and `VITE_LEMON_STORE` for Preview first.
+6. **Test on a preview deploy in test mode.**
+   - Sign in on a phone in the TikTok and Instagram in-app browsers.
+   - Save a sky, then see it on a second device.
+   - Buy with 4242…, refund, and resend a webhook.
+   - Confirm free responses contain no hidden names (devtools → Network → `sky`).
+   - Friend request and accept between two accounts.
+   - Delete an account.
+7. **Go live.**
+   - Review the privacy policy draft. It is not legal advice; consider asking someone qualified, especially because users are minors.
+   - Switch Lemon Squeezy to live mode, and update the checkout URL, webhook and secret.
+   - Set the Production env vars, merge, and make one real purchase and refund.

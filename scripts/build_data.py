@@ -2,7 +2,8 @@
 """Build app/src/data.json from the U.S. Dept. of Education College Scorecard API.
 
 Usage:
-  SCORECARD_API_KEY=yourkey python3 scripts/build_data.py
+  SCORECARD_API_KEY=yourkey python3 scripts/build_data.py            # curated schools → app/src/data.json
+  SCORECARD_API_KEY=yourkey python3 scripts/build_data.py --pool 1000  # + expanded Pro pool → scripts/out/pool.json
 
 Get a free key at https://api.data.gov/signup (DEMO_KEY works but allows ~10 requests/hour).
 First run discovers Scorecard IDs by name and saves them to scripts/ids.json.
@@ -145,6 +146,41 @@ def compact(r, c):
     )
 
 
+POOL_OUT = os.path.join(ROOT, "out", "pool.json")
+
+
+def short_name(name):
+    # Labels need to fit next to a planet: drop campus suffixes and shorten long "University" names.
+    n = re.sub(r"[-,\s]+(Main Campus|Campus Immersion|Main)$", "", name).strip()
+    n = re.sub(r"\s*\(The\)$", "", n)
+    if len(n) > 26:
+        n = n.replace("University of ", "U. of ").replace(" University", " U.").replace(" College", " Coll.")
+    return n
+
+
+def build_pool(size, curated_ids):
+    """The largest bachelor's-granting schools outside the curated list: the server-only pool Pro reveals."""
+    pool, page = {}, 0
+    while len(pool) < size:
+        d = get(f"pool_{page}", f"{BASEQ}&latest.student.size__range=1000..&sort=latest.student.size:desc&page={page}")
+        for r in d["results"]:
+            # Mostly-online giants aren't places you'd "orbit"; skipped by name (a heuristic, not a Scorecard field).
+            online = re.search(r"online|digital immersion|global campus|western governors|southern new hampshire|grand canyon|liberty university", r["school.name"], re.I)
+            if r["id"] not in curated_ids and not online and r.get("latest.admissions.admission_rate.overall") is not None:
+                pool[r["id"]] = r
+        if len(d["results"]) < 100:
+            break
+        page += 1
+    rows = []
+    for r in list(pool.values())[:size]:
+        c = dict(short=short_name(r["school.name"]), flags="", dl="", note="", color="")
+        rows.append(compact(r, c))
+    os.makedirs(os.path.dirname(POOL_OUT), exist_ok=True)
+    with open(POOL_OUT, "w") as f:
+        json.dump({"asOf": time.strftime("%Y-%m-%d"), "schools": rows}, f, separators=(",", ":"))
+    print(f"Wrote {len(rows)} pool schools to scripts/out/pool.json (server-only; import with scripts/import_supabase.py)")
+
+
 def main():
     check_key()
     curated = load_curated()
@@ -180,6 +216,10 @@ def main():
         json.dump({"asOf": time.strftime("%Y-%m-%d"), "schools": schools}, f, separators=(",", ":"))
         f.write("\n")
     print(f"Wrote {len(schools)} schools to app/src/data.json")
+    if "--pool" in sys.argv:
+        i = sys.argv.index("--pool")
+        size = int(sys.argv[i + 1]) if len(sys.argv) > i + 1 and sys.argv[i + 1].isdigit() else 1000
+        build_pool(size, {s["id"] for s in schools})
 
 
 if __name__ == "__main__":
