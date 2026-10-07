@@ -2,3 +2,6 @@ scripts/cache/
 scripts/_build.log
 .DS_Store
 .claude/
+.env
+.env.*
+!.env.example
