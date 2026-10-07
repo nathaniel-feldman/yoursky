@@ -2,12 +2,13 @@
 // Wrangler runs build.command before every deploy and preview, so Workers Builds needs no separate build step:
 //   main:            npx wrangler deploy   → builds, then publishes dist/ to findyoursky.com
 //   other branches:  npx wrangler preview  → builds, then uploads a preview (the empty previews block enables it)
-// _headers and _redirects in app/public apply as usual.
+// _headers in app/public applies as usual.
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "yoursky",
   "compatibility_date": "2026-10-01",
   "build": { "command": "npm run build" },
-  "assets": { "directory": "./dist" },
+  // Paths that aren't files (like /f/CODE friend links) serve index.html; the app reads the path itself.
+  "assets": { "directory": "./dist", "not_found_handling": "single-page-application" },
   "previews": {}
 }

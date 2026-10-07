@@ -39,7 +39,7 @@ Supabase gives Edge Functions `SUPABASE_URL`, `SUPABASE_SECRET_KEYS`, `SUPABASE_
 ```
 app/
   index.html, about.html, privacy.html   pages (Vite entry points)
-  public/                                copied as-is: icons, og.jpg, _headers, _redirects (/f/CODE friend links)
+  public/                                copied as-is: icons, og.jpg, _headers
   src/
     app.js            screens and interactions (entry)
     config.js         majors, regions, questions, activities
