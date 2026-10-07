@@ -5,7 +5,7 @@ Usage: python3 scripts/make_assets.py
 """
 import math, os, random, shutil, subprocess, tempfile
 
-ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "app")
+ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "app", "public")
 GA = math.pi * (3 - math.sqrt(5))
 
 
