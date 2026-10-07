@@ -76,7 +76,7 @@ python3 scripts/import_supabase.py                                     # upsert 
 ## Deploy
 
 **Website (Cloudflare Worker `yoursky`, static assets).**
-- Workers Builds runs the build command `npm run build`, then `npx wrangler deploy` (production, `main`) or `npx wrangler preview` (other branches). [wrangler.jsonc](wrangler.jsonc) points both at `dist/`.
+- Workers Builds runs the build command `npm run build`, then `npx wrangler deploy` (production, `main`); other branches run the preview command `npm run build && npx wrangler versions upload` (Cloudflare skips the separate build command for previews). [wrangler.jsonc](wrangler.jsonc) points both at `dist/`.
 - Public build values:
   - Production builds read them from the committed [.env.production](.env.production) (public values only).
   - Preview builds use the build variables set in the dashboard (Settings → Builds → Previews Base), which point at Lemon Squeezy test mode. Build variables override the file.
