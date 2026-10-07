@@ -1,8 +1,13 @@
-// Cloudflare Worker that serves the built site (static assets only). Workers Builds runs `npm run build`, then
-// `npx wrangler deploy` uploads dist/. _headers and _redirects in app/public apply as usual.
+// Cloudflare Worker that serves the built site (static assets only).
+// Wrangler runs build.command before every deploy and preview, so Workers Builds needs no separate build step:
+//   main:            npx wrangler deploy   → builds, then publishes dist/ to findyoursky.com
+//   other branches:  npx wrangler preview  → builds, then uploads a preview (the empty previews block enables it)
+// _headers and _redirects in app/public apply as usual.
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "yoursky",
   "compatibility_date": "2026-10-01",
-  "assets": { "directory": "./dist" }
+  "build": { "command": "npm run build" },
+  "assets": { "directory": "./dist" },
+  "previews": {}
 }
