@@ -75,10 +75,12 @@ python3 scripts/import_supabase.py                                     # upsert 
 
 ## Deploy
 
-**Website (Cloudflare Pages).**
-- Build settings: build command `npm run build`, output directory `dist`. The Node version comes from `.node-version`.
-- Add the `VITE_*` variables under Settings → Environment variables, for Production and Preview.
-- Every branch gets a preview URL.
+**Website (Cloudflare Worker `yoursky`, static assets).**
+- Workers Builds runs the build command `npm run build`, then `npx wrangler deploy` (production, `main`) or `npx wrangler preview` (other branches). [wrangler.jsonc](wrangler.jsonc) points both at `dist/`.
+- Public build values:
+  - Production builds read them from the committed [.env.production](.env.production) (public values only).
+  - Preview builds use the build variables set in the dashboard (Settings → Builds → Previews Base), which point at Lemon Squeezy test mode. Build variables override the file.
+- The Node version comes from `.node-version`.
 
 **Database and functions (Supabase CLI)**, run from the repo root:
 
