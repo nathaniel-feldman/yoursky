@@ -66,11 +66,11 @@ export function detailFor(s, P, income) {
     id: s.id,
     chance: estimateChance(s, studentScores(P), CFG.ACT_TO_SAT),
     cost: {
-      // Scorecard reports negative net prices when grants exceed the cost; show those as $0.
+      // costOf floors at $0; Scorecard's raw value can be negative when grants exceed the cost.
       net: Math.max(0, c.est),
       sticker: c.sticker,
       basis: P.region === 'intl' ? 'international' : byIncome ? 'income' : s.net != null ? 'average' : 'estimate',
-      grantsExceedCost: c.est < 0,
+      grantsExceedCost: (byIncome ? s.nbi[income] : s.net ?? 0) < 0,
       inState: c.inState,
     },
     earnings: s.earn ?? null,
