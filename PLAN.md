@@ -290,6 +290,6 @@ Totals: 98 tests, all passing. `deno check` passes for all three functions. With
    - Friend request and accept between two accounts.
    - Delete an account.
 7. **Go live.**
-   - Review the privacy policy draft. It is not legal advice; consider asking someone qualified, especially because users are minors.
+   - ~~Review the privacy policy draft.~~ Approved by a parent on 2026-10-08; DRAFT banner removed.
    - Switch Lemon Squeezy to live mode, and update the checkout URL, webhook and secret.
    - Set the Production env vars, merge, and make one real purchase and refund.
