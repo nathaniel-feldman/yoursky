@@ -1,0 +1,11 @@
+# Supabase CLI configuration for deploying Your Sky's Edge Functions.
+# The functions verify callers themselves (signature for the webhook, user tokens for the others), so gateway JWT
+# verification is off: the webhook is called by Lemon Squeezy, and anonymous visitors call /sky.
+[functions.lemon-webhook]
+verify_jwt = false
+
+[functions.sky]
+verify_jwt = false
+
+[functions.account-delete]
+verify_jwt = false

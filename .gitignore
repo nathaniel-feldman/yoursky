@@ -2,3 +2,11 @@ scripts/cache/
 scripts/_build.log
 .DS_Store
 .claude/
+.env
+.env.*
+!.env.example
+node_modules/
+dist/
+!.env.mock
+scripts/out/
+!.env.production

@@ -1,0 +1,10 @@
+<!-- Supabase → Authentication → Email Templates → "Magic Link". Subject: Your Your Sky code: {{ .Token }}
+     The 6-digit code works inside TikTok/Instagram in-app browsers; the link uses token_hash so it works in any
+     browser (the default PKCE link fails when an email opens in a different browser). -->
+<div style="font-family: -apple-system, Segoe UI, sans-serif; max-width: 420px; margin: 0 auto; padding: 32px 24px; color: #15171a;">
+  <p style="font: 500 12px monospace; letter-spacing: 3px; color: #8e939c; margin: 0 0 20px;">YOUR SKY</p>
+  <p style="font-size: 16px; margin: 0 0 12px;">Your sign-in code:</p>
+  <p style="font: 600 34px monospace; letter-spacing: 8px; margin: 0 0 20px;">{{ .Token }}</p>
+  <p style="font-size: 15px; margin: 0 0 24px;">Type it where you signed in. Or <a href="{{ .SiteURL }}/?token_hash={{ .TokenHash }}&type=email" style="color: #15171a;">tap here to sign in</a>.</p>
+  <p style="font-size: 13px; color: #8e939c; margin: 0;">The code expires in an hour. If you didn’t ask for it, ignore this email.</p>
+</div>

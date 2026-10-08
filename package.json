@@ -1,0 +1,27 @@
+{
+  "name": "yoursky",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "dev:mock": "vite --mode mock --port 5174",
+    "build": "node scripts/sync_shared.mjs && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "sync:shared": "node scripts/sync_shared.mjs",
+    "check:functions": "deno check --config supabase/functions/deno.json supabase/functions/*/index.ts"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.8",
+    "deno": "^2.9.6",
+    "jose": "^6.2.12",
+    "supabase": "^2.120.0",
+    "vite": "^8.3.3",
+    "vitest": "^5.0.3",
+    "wrangler": "^4.148.0"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.117.3"
+  }
+}
